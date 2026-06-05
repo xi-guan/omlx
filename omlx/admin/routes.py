@@ -698,6 +698,9 @@ class GlobalSettingsRequest(BaseModel):
     # Explicit null restores the default dashboard layout.
     ui_dashboard_layout: DashboardLayoutRequest | None = None
 
+    # Benchmark settings
+    benchmark_share_results: bool | None = None
+
     # Idle timeout settings. null/0/"" disables the global fallback.
     idle_timeout_seconds: int | None = Field(default=None, ge=60)
 
@@ -1868,6 +1871,8 @@ async def admin_static(path: str):
     if not file_path.is_file() or not file_path.resolve().is_relative_to(
         static_dir.resolve()
     ):
+        if path.endswith(".map"):
+            return Response(status_code=204)
         raise HTTPException(status_code=404, detail="File not found")
     media_types = {
         ".svg": "image/svg+xml",
@@ -4691,6 +4696,9 @@ def _global_settings_response(global_settings):
             "language": global_settings.ui.language,
             "dashboard_layout": global_settings.ui.dashboard_layout,
         },
+        "benchmark": {
+            "share_results": global_settings.benchmark.share_results,
+        },
         "idle_timeout": {
             "idle_timeout_seconds": global_settings.idle_timeout.idle_timeout_seconds,
         },
@@ -5649,6 +5657,15 @@ async def update_global_settings(
             layout.model_dump() if layout is not None else None
         )
         runtime_applied.append("ui_dashboard_layout")
+
+    # Apply benchmark settings (Live)
+    if request.benchmark_share_results is not None:
+        global_settings.benchmark.share_results = request.benchmark_share_results
+        runtime_applied.append("benchmark_share_results")
+        logger.info(
+            f"Benchmark share_results "
+            f"{'enabled' if request.benchmark_share_results else 'disabled'}"
+        )
 
     # Apply idle timeout settings (Live)
     # Use model_fields_set to distinguish "explicitly sent as null" (disable)
@@ -7560,7 +7577,13 @@ async def list_hf_models(is_admin: bool = Depends(require_admin)):
 
     model_dirs = global_settings.model.get_model_dirs(global_settings.base_path)
 
-    from ..model_discovery import _resolve_hf_cache_entry
+    from ..model_discovery import _resolve_hf_cache_entry, detect_model_type
+    from .hf_downloader import _format_param_count, get_local_params
+
+    # Resolve overrides via the same settings_manager the modal reads — so a
+    # user-set ``model_type_override`` (e.g., Kokoro → audio_tts) drives the
+    # tab filter, instead of the static config-based detection alone.
+    settings_manager = _get_settings_manager()
 
     def _add_model(
         model_path: Path,
@@ -7572,6 +7595,18 @@ async def list_hf_models(is_admin: bool = Depends(require_admin)):
             return
         seen_names.add(model_name)
         total_size = sum(f.stat().st_size for f in model_path.rglob("*") if f.is_file())
+        params, active = get_local_params(model_path)
+        model_type = None
+        if settings_manager is not None:
+            try:
+                model_type = settings_manager.get_settings(model_name).model_type_override
+            except Exception:
+                model_type = None
+        if not model_type:
+            try:
+                model_type = detect_model_type(model_path)
+            except Exception:
+                model_type = "llm"
         models.append(
             {
                 "name": model_name,
@@ -7584,6 +7619,11 @@ async def list_hf_models(is_admin: bool = Depends(require_admin)):
                 ),
                 "size": total_size,
                 "size_formatted": format_size(total_size),
+                "params": params,
+                "params_formatted": _format_param_count(params) if params else None,
+                "active_params": active,
+                "active_params_formatted": _format_param_count(active) if active else None,
+                "model_type": model_type,
             }
         )
 
