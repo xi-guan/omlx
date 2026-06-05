@@ -140,8 +140,7 @@ class RequestOutputCollector:
             request_id=new.request_id,
             new_token_ids=merged_new_token_ids,
             new_text=merged_new_text,
-            output_token_ids=new.output_token_ids,  # Use latest cumulative
-            output_text=new.output_text,  # Use latest cumulative
+            output_text=new.output_text,
             finished=new.finished,
             finish_reason=new.finish_reason,
             prompt_tokens=new.prompt_tokens,

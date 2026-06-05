@@ -10998,7 +10998,6 @@ class Scheduler:
                 request_id=request_id,
                 new_token_ids=[response.token] if not is_stop else [],
                 new_text=new_text,
-                output_token_ids=list(request.output_token_ids),
                 prompt_tokens=request.num_prompt_tokens,
                 completion_tokens=request.num_output_tokens,
                 generated_at=output_generated_at,
@@ -11034,6 +11033,7 @@ class Scheduler:
 
                 output.finished = True
                 output.finish_reason = response.finish_reason
+                output.output_token_ids = list(request.output_token_ids)
                 finished_ids.add(request_id)
 
                 if parser_session is not None:

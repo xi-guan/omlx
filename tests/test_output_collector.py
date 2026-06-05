@@ -365,7 +365,6 @@ class TestRequestOutputCollectorMergeOutputs:
 
         assert result.new_token_ids == [100, 101, 102]
         assert result.new_text == "Hello world"
-        assert result.output_token_ids == [100, 101, 102]  # Uses latest
         assert result.completion_tokens == 3  # Uses latest
 
     def test_merge_preserves_finished_status(self):

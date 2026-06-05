@@ -19,6 +19,7 @@ from __future__ import annotations
 import contextlib
 import errno
 import hashlib
+import itertools
 import json
 import logging
 import os
@@ -1163,7 +1164,7 @@ class PagedSSDCacheIndex:
         """
         with self._lock:
             result = []
-            for block_hash in list(self._lru.keys())[:count]:
+            for block_hash in itertools.islice(self._lru.keys(), count):
                 if block_hash in self._index:
                     result.append(self._index[block_hash])
             return result
