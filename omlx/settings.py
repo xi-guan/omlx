@@ -814,6 +814,24 @@ class UISettings:
 
 
 @dataclass
+class BenchmarkSettings:
+    """Benchmark settings."""
+
+    # Opt-in upload of throughput results to the omlx.ai community leaderboard.
+    # Default off: nothing leaves the device unless the user enables it.
+    share_results: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {"share_results": self.share_results}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> BenchmarkSettings:
+        """Create from dictionary."""
+        return cls(share_results=bool(data.get("share_results", False)))
+
+
+@dataclass
 class ClaudeCodeSettings:
     """Claude Code integration settings."""
 
@@ -958,6 +976,7 @@ class GlobalSettings:
     claude_code: ClaudeCodeSettings = field(default_factory=ClaudeCodeSettings)
     integrations: IntegrationSettings = field(default_factory=IntegrationSettings)
     ui: UISettings = field(default_factory=UISettings)
+    benchmark: BenchmarkSettings = field(default_factory=BenchmarkSettings)
     idle_timeout: ModelIdleTimeoutSettings = field(
         default_factory=ModelIdleTimeoutSettings
     )
@@ -1054,6 +1073,8 @@ class GlobalSettings:
                 self.integrations = IntegrationSettings.from_dict(data["integrations"])
             if "ui" in data:
                 self.ui = UISettings.from_dict(data["ui"])
+            if "benchmark" in data:
+                self.benchmark = BenchmarkSettings.from_dict(data["benchmark"])
             if "idle_timeout" in data:
                 self.idle_timeout = ModelIdleTimeoutSettings.from_dict(
                     data["idle_timeout"]
@@ -1396,6 +1417,7 @@ class GlobalSettings:
             "claude_code": self.claude_code.to_dict(),
             "integrations": self.integrations.to_dict(),
             "ui": self.ui.to_dict(),
+            "benchmark": self.benchmark.to_dict(),
             "idle_timeout": self.idle_timeout.to_dict(),
         }
 
@@ -1749,6 +1771,7 @@ class GlobalSettings:
             "claude_code": self.claude_code.to_dict(),
             "integrations": self.integrations.to_dict(),
             "ui": self.ui.to_dict(),
+            "benchmark": self.benchmark.to_dict(),
             "idle_timeout": self.idle_timeout.to_dict(),
         }
 

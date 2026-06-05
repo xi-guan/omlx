@@ -11,7 +11,7 @@
             {% endmacro %}
             <div x-show="mainTab === 'bench'" x-cloak>
                 <!-- Sub-tab navigation -->
-                <div class="flex flex-wrap items-center gap-2 mb-10 animate-fade-in-up">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
                     <button
                         @click="setBenchTab('throughput')"
                         :class="benchTab === 'throughput'
@@ -40,12 +40,11 @@
 
                 <!-- Throughput tab -->
                 <div x-show="benchTab === 'throughput'" x-cloak>
-                <div class="animate-fade-in-up">
+                <div>
                     <!-- Header -->
-                    <div class="mb-8">
+                    <div class="mb-4">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <div>
-                                <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('bench.section_label') }}</h2>
                                 <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('bench.heading') }}</h3>
                             </div>
                             <a x-show="benchDeviceInfo?.owner_hash"
@@ -236,6 +235,21 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Share results toggle -->
+                            <div class="pt-1">
+                                <label class="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox"
+                                           :checked="globalSettings.benchmark.share_results"
+                                           @change="saveBenchmarkShareResults($event.target.checked)"
+                                           :disabled="benchRunning"
+                                           class="mt-0.5 w-4 h-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900">
+                                    <span class="text-sm text-neutral-700">
+                                        {{ t('bench.config.share_results') }}
+                                        <span class="block text-xs text-neutral-400 mt-0.5">{{ t('bench.config.share_results_hint') }}</span>
+                                    </span>
+                                </label>
                             </div>
 
                             <!-- Run / Cancel Button -->
@@ -477,7 +491,7 @@
                     </div>
 
                     <!-- Community Benchmark Upload Skipped (external endpoint) -->
-                    <div x-show="benchUploadSkipped" x-cloak
+                    <div x-show="benchUploadSkipped && benchUploadSkipped.reason !== 'share_results_disabled'" x-cloak
                          class="bg-amber-50 rounded-2xl border border-amber-200 overflow-hidden mb-6">
                         <div class="flex items-center gap-3 px-6 py-4 border-b border-amber-200">
                             <i data-lucide="flask-conical" class="w-4 h-4 text-amber-600"></i>

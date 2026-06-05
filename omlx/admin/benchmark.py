@@ -1403,6 +1403,19 @@ async def _upload_to_omlx_ai(run: BenchmarkRun, engine_pool: Any) -> None:
         parse_chip_info,
     )
 
+    # Skip upload when the user hasn't opted in via the Share results toggle.
+    # Default is off so nothing leaves the device unless explicitly enabled.
+    from .routes import _get_global_settings
+
+    gs = _get_global_settings() if _get_global_settings else None
+    if gs is None or not gs.benchmark.share_results:
+        await _send_event(run, {
+            "type": "upload_skipped",
+            "reason": "share_results_disabled",
+        })
+        logger.info("Benchmark upload skipped: share_results is disabled")
+        return
+
     # Accelerated runs upload too. They carry their flags so the leaderboard
     # can mark and filter them, which is more useful than withholding the one
     # set of numbers people most want to see.
