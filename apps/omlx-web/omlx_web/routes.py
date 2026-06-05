@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 
@@ -167,6 +167,8 @@ async def admin_static(path: str):
     if not file_path.is_file() or not file_path.resolve().is_relative_to(
         static_dir.resolve()
     ):
+        if path.endswith(".map"):
+            return Response(status_code=204)
         raise HTTPException(status_code=404, detail="File not found")
     media_types = {
         ".svg": "image/svg+xml",
