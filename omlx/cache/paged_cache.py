@@ -27,7 +27,6 @@ from __future__ import annotations
 import hashlib
 import logging
 import threading
-import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, NewType, Optional, Tuple
@@ -36,6 +35,16 @@ from .interface import CacheManager
 from .stats import BaseCacheStats, PagedCacheStats
 
 logger = logging.getLogger(__name__)
+
+# Monotonic counter for LRU ordering (cheaper than time.time() syscall)
+_lru_counter: int = 0
+
+
+def _next_lru_tick() -> int:
+    global _lru_counter
+    _lru_counter += 1
+    return _lru_counter
+
 
 # Type alias for block hash (content-based hash for prefix caching)
 BlockHash = NewType("BlockHash", bytes)
@@ -159,7 +168,7 @@ class CacheBlock:
 
     # Metadata
     token_count: int = 0
-    last_access: float = field(default_factory=time.time)
+    last_access: int = field(default_factory=_next_lru_tick)
 
     def is_full(self, block_size: int) -> bool:
         """Check if block is at capacity."""
@@ -175,7 +184,7 @@ class CacheBlock:
 
     def touch(self) -> None:
         """Update last access time."""
-        self.last_access = time.time()
+        self.last_access = _next_lru_tick()
 
     def __repr__(self) -> str:
         prev_id = self.prev_free_block.block_id if self.prev_free_block else None
@@ -767,6 +776,9 @@ class PagedCacheManager(CacheManager):
 
             block.ref_count -= 1
 
+            if block.ref_count == 1:
+                self.stats.shared_blocks = max(0, self.stats.shared_blocks - 1)
+
             if block.ref_count <= 0:
                 # Remove from hash cache
                 if block.block_hash is not None:
@@ -805,6 +817,9 @@ class PagedCacheManager(CacheManager):
                     continue
 
                 block.ref_count -= 1
+
+                if block.ref_count == 1:
+                    self.stats.shared_blocks = max(0, self.stats.shared_blocks - 1)
 
                 if block.ref_count <= 0:
                     # Remove from hash cache
@@ -1342,9 +1357,6 @@ class PagedCacheManager(CacheManager):
     def get_stats(self) -> PagedCacheStats:
         """Get current cache statistics."""
         with self._lock:
-            self.stats.shared_blocks = sum(
-                1 for b in self.allocated_blocks.values() if b.ref_count > 1
-            )
             self.stats.free_blocks = self.free_block_queue.num_free_blocks
             return self.stats
 
