@@ -23,53 +23,12 @@
 <script defer src="/admin/static/js/katex-auto-render.min.js"></script>
 
 <style>
-    /* CSS Variables for theming */
-    :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #f1f5f9;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-tertiary: #64748b;
-        --text-muted: #94a3b8;
-        --border-faint: #e2e8f0;
-        --border-normal: #cbd5e1;
-        --code-bg: #f3f4f6;
-        --btn-primary: #171717;
-        --btn-primary-hover: #27272a;
-        --btn-primary-text: #ffffff;
-        --text-danger: #ef4444;
-        --bg-danger-hover: rgba(239, 68, 68, 0.1);
-        --timeline-accent: #3b82f6;
-    }
-
-    [data-theme="dark"] {
-        --bg-primary: #1d1d20;
-        --bg-secondary: #252529;
-        --bg-tertiary: #2d2d32;
-        --text-primary: #efefef;
-        --text-secondary: #a1a1aa;
-        --text-tertiary: #71717a;
-        --text-muted: #52525b;
-        --border-faint: #3f3f46;
-        --border-normal: #52525b;
-        --code-bg: #27272a;
-        --btn-primary: #e5e5e5;
-        --btn-primary-hover: #d4d4d4;
-        --btn-primary-text: #18181b;
-        --text-danger: #f87171;
-        --bg-danger-hover: rgba(239, 68, 68, 0.2);
-        --timeline-accent: #60a5fa;
-    }
+    /* Theme variables and body background are inlined in base.html
+       so they apply before this <style> block parses. */
 
     [data-theme="dark"] ::selection {
         background-color: #3f3f46;
         color: var(--text-primary);
-    }
-
-    body {
-        background-color: var(--bg-primary) !important;
-        color: var(--text-primary) !important;
     }
 
     html,
@@ -1021,8 +980,8 @@
     <div class="sidebar-width h-full bg-surface border-r border-line flex flex-col sidebar-transition"
         :class="{ 'sidebar-hidden': !sidebarOpen }">
         <!-- Sidebar Header -->
-        <div class="p-4 border-b border-line flex-shrink-0">
-            <div class="flex items-center justify-between">
+        <div class="h-14 px-4 border-b border-line flex-shrink-0 flex items-center" style="box-sizing: content-box;">
+            <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-2">
                     <a href="/admin/dashboard">
                         <img x-show="activeTheme === 'light'" src="/admin/static/navbar-logo-light.svg" alt="oMLX"
@@ -1813,7 +1772,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-end">
+                    <div class="flex items-center">
                         <!-- Image upload button (only for VLM models) -->
                         <button x-show="hasVisionSupport()" @click="$refs.imageInput.click()"
                             :disabled="!apiKeySet || !currentModel || isCurrentChatStreaming() || imageLimitReached()"

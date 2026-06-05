@@ -66,7 +66,10 @@
             display: inline-block;
         }
 
-        /* Global UI tokens */
+        /* Language-specific font stack + shared theme variables.
+           Inlined here (not in external CSS) so they apply before
+           tailwind.css / dashboard.css load — prevents white-flash
+           when navigating between admin pages in dark mode. */
         :root {
             --focus-ring-color: #171717;
             {% if current_lang == 'ko' %}
@@ -80,14 +83,51 @@
             {% else %}
             --font-sans: 'Inter', system-ui, sans-serif;
             {% endif %}
+
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --text-muted: #94a3b8;
+            --border-faint: #e2e8f0;
+            --border-normal: #cbd5e1;
+            --code-bg: #f3f4f6;
+            --link-color: #2563eb;
+            --btn-primary: #171717;
+            --btn-primary-hover: #27272a;
+            --btn-primary-text: #ffffff;
+            --text-danger: #ef4444;
+            --bg-danger-hover: rgba(239, 68, 68, 0.1);
+            --timeline-accent: #3b82f6;
         }
 
         [data-theme="dark"] {
             --focus-ring-color: #efefef;
+            --bg-primary: #1d1d20;
+            --bg-secondary: #252529;
+            --bg-tertiary: #2d2d32;
+            --text-primary: #efefef;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --text-muted: #52525b;
+            --border-faint: #3f3f46;
+            --border-normal: #52525b;
+            --code-bg: #27272a;
+            --link-color: #60a5fa;
+            --btn-primary: #e5e5e5;
+            --btn-primary-hover: #d4d4d4;
+            --btn-primary-text: #18181b;
+            --text-danger: #f87171;
+            --bg-danger-hover: rgba(239, 68, 68, 0.2);
+            --timeline-accent: #60a5fa;
         }
 
         body {
             font-family: var(--font-sans) !important;
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -150,6 +190,19 @@
             pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+
+        /* disable all animations and transitions globally */
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+
+        /* flatten large border-radius to 0.5rem */
+        .rounded-lg { border-radius: 0.5rem !important; }
+        .rounded-xl { border-radius: 0.5rem !important; }
+        .rounded-2xl { border-radius: 0.5rem !important; }
+        .rounded-3xl { border-radius: 0.5rem !important; }
     </style>
 
     {% block head %}{% endblock %}

@@ -1,6 +1,6 @@
             <div x-show="mainTab === 'settings'" x-cloak>
             <!-- Tab Navigation -->
-            <div class="flex items-center gap-2 mb-10 animate-fade-in-up">
+            <div class="flex items-center gap-2 mb-4">
                 <button
                     @click="setSettingsTab('global')"
                     :class="activeTab === 'global'
@@ -32,10 +32,9 @@
 
             <!-- Global Settings Tab -->
             <div x-show="activeTab === 'global'" x-cloak>
-                <div class="animate-fade-in-up">
+                <div>
                     <!-- Header -->
-                    <div class="mb-8">
-                        <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('settings.global.section_label') }}</h2>
+                    <div class="mb-4">
                         <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.global.heading') }}</h3>
                         <p class="text-sm text-neutral-500 mt-2">
                             {{ t('settings.global.restart_notice') }} <span class="px-1 py-0.5 text-[9px] font-medium rounded bg-amber-50 text-amber-600 border border-amber-200">{{ t('settings.global.restart_badge') }}</span> {{ t('settings.global.restart_suffix') }}
@@ -1022,8 +1021,6 @@
                         <div class="flex flex-col gap-1 min-w-0 sm:flex-1">
                             <!-- Save success -->
                             <div x-show="saveSuccess" x-cloak
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:leave="transition ease-in duration-150"
                                  class="flex items-start gap-2 text-sm text-neutral-700 min-w-0"
                                  :title="saveMessage">
                                 <i data-lucide="check-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
@@ -1031,8 +1028,6 @@
                             </div>
                             <!-- Save error -->
                             <div x-show="saveError" x-cloak
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:leave="transition ease-in duration-150"
                                  class="flex items-start gap-2 text-sm text-red-600 min-w-0"
                                  :title="saveError">
                                 <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i>
@@ -1331,10 +1326,9 @@
 
             <!-- Model Settings Tab -->
             <div x-show="activeTab === 'models'" x-cloak>
-                <div class="animate-fade-in-up">
+                <div>
                     <!-- Header -->
-                    <div class="mb-8">
-                        <h2 class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">{{ t('settings.models.section_label') }}</h2>
+                    <div class="mb-4">
                         <div class="flex items-center gap-3">
                             <h3 class="text-2xl font-bold tracking-tight text-neutral-900">{{ t('settings.models.heading') }}</h3>
                             <button @click="reloadModels()"
@@ -1482,7 +1476,7 @@
                                         </div>
 
                                         <!-- Size -->
-                                        <div class="hidden sm:block w-60 text-center flex-shrink-0">
+                                        <div class="hidden sm:block w-20 text-center flex-shrink-0">
                                             <span class="text-sm text-neutral-600" x-text="modelSizeLabel(model)"></span>
                                         </div>
 
