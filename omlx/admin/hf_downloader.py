@@ -356,6 +356,115 @@ def _get_param_count(safetensors: dict) -> int:
     return sum(params.values())
 
 
+# Tensor-name substrings that flag a routed-MoE expert MLP. ``.shared_expert.``
+# is intentionally absent — shared experts always activate and so count toward
+# the always-on side.
+_MOE_TENSOR_TAGS = (".experts.", ".switch_mlp.", "block_sparse")
+
+# Cache (total, active) by (model_path, dir_mtime); active is None for dense.
+_LOCAL_PARAMS_CACHE: dict[tuple[str, float], tuple[Optional[int], Optional[int]]] = {}
+
+
+def _compute_local_params(model_path: Path) -> tuple[Optional[int], Optional[int]]:
+    """Return ``(total, active)`` logical params for a downloaded model.
+
+    Total uses ``model.safetensors.index.json`` when available, else sums
+    walked tensor counts. Active is the per-token count for routed MoE
+    models (non-expert + experts_per_tok / num_experts × expert_total) and
+    ``None`` for dense models. U32-packed quantized weights are scaled by
+    their pack factor (32/bits) so counts reflect logical parameters.
+    """
+    import json
+
+    try:
+        from safetensors import safe_open
+    except ImportError:
+        return None, None
+
+    # Read config.json once: drives MoE detection + per-tensor quant bits.
+    cfg: dict = {}
+    cfg_path = model_path / "config.json"
+    if cfg_path.exists():
+        try:
+            loaded = json.loads(cfg_path.read_text())
+            if isinstance(loaded, dict):
+                cfg = loaded
+        except Exception:
+            pass
+
+    quant = cfg.get("quantization") if isinstance(cfg.get("quantization"), dict) else None
+    default_bits = quant.get("bits") if isinstance(quant, dict) and isinstance(quant.get("bits"), int) else None
+
+    # MoE fields may live top-level (gpt-oss) or under text_config (Qwen VLM).
+    per_tok = num_experts = None
+    for scope in (cfg, cfg.get("text_config") if isinstance(cfg.get("text_config"), dict) else {}):
+        p = scope.get("num_experts_per_tok")
+        n = scope.get("num_local_experts") or scope.get("num_experts") or scope.get("n_routed_experts")
+        if isinstance(p, int) and isinstance(n, int) and 0 < p < n:
+            per_tok, num_experts = p, n
+            break
+
+    expert_total = non_expert_total = 0
+    for st_path in model_path.glob("*.safetensors"):
+        try:
+            with safe_open(str(st_path), framework="numpy") as f:
+                for key in f.keys():
+                    if key.endswith(".scales") or key.endswith(".biases"):
+                        continue
+                    slc = f.get_slice(key)
+                    shape = slc.get_shape()
+                    if not shape:
+                        continue
+                    count = 1
+                    for d in shape:
+                        count *= int(d)
+                    if key.endswith(".weight") and slc.get_dtype() == "U32":
+                        bits = default_bits
+                        entry = quant.get(key[: -len(".weight")]) if quant else None
+                        if isinstance(entry, dict) and isinstance(entry.get("bits"), int):
+                            bits = entry["bits"]
+                        if bits:
+                            count *= 32 // bits
+                    if any(tag in key for tag in _MOE_TENSOR_TAGS):
+                        expert_total += count
+                    else:
+                        non_expert_total += count
+        except Exception:
+            continue
+
+    walked_total = non_expert_total + expert_total
+    if walked_total <= 0:
+        return None, None
+
+    # Prefer the canonical total mlx-lm writes into the index.
+    total = walked_total
+    idx = model_path / "model.safetensors.index.json"
+    if idx.exists():
+        try:
+            t = json.loads(idx.read_text()).get("metadata", {}).get("total_parameters")
+            if isinstance(t, int) and t > 0:
+                total = t
+        except Exception:
+            pass
+
+    active = None
+    if per_tok and expert_total > 0:
+        active = non_expert_total + expert_total * per_tok // num_experts
+    return total, active
+
+
+def get_local_params(model_path: Path) -> tuple[Optional[int], Optional[int]]:
+    """Cached ``(total, active)`` params for a downloaded model directory."""
+    try:
+        mtime = model_path.stat().st_mtime
+    except OSError:
+        return None, None
+    key = (str(model_path), mtime)
+    if key not in _LOCAL_PARAMS_CACHE:
+        _LOCAL_PARAMS_CACHE[key] = _compute_local_params(model_path)
+    return _LOCAL_PARAMS_CACHE[key]
+
+
 # HF API sort field mapping for search.
 _SORT_MAP = {
     "trending": "trendingScore",

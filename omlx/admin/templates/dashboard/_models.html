@@ -55,13 +55,29 @@
                             <p class="text-sm text-neutral-500 mt-2">{{ t('models.manager.description') }}</p>
                         </div>
 
+                        <!-- Filter tabs by model type -->
+                        <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                            <template x-for="tab in managerTypeTabs" :key="tab.id">
+                                <button x-show="tab.id === 'all' || hfModels.some(m => m.model_type === tab.id)"
+                                        x-cloak
+                                        @click="managerTypeTab = tab.id"
+                                        :class="managerTypeTab === tab.id
+                                            ? 'bg-neutral-900 text-white'
+                                            : 'text-neutral-600 hover:bg-neutral-100'"
+                                        class="px-3 py-1 text-xs font-medium rounded-full transition-all flex items-center gap-1.5">
+                                    <span x-text="window.t(tab.labelKey)"></span>
+                                    <span class="text-[10px] opacity-60"
+                                          x-text="tab.id === 'all' ? hfModels.length : hfModels.filter(m => m.model_type === tab.id).length"></span>
+                                </button>
+                            </template>
+                        </div>
                         <!-- Local Models Section -->
                         <div class="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
                             <div class="flex items-center justify-between px-4 sm:px-6 py-4 bg-neutral-100 border-b border-neutral-200">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="hard-drive" class="w-4 h-4 text-neutral-500"></i>
                                     <span class="text-xs font-bold uppercase tracking-wider text-neutral-600">{{ t('models.manager.local_models') }}</span>
-                                    <span class="text-xs text-neutral-400" x-text="window.t('models.manager.models_count').replace('{count}', sortedManagerModels.length)"></span>
+                                    <span class="text-xs text-neutral-400" x-text="window.t('models.manager.models_count').replace('{count}', sortedManagerModels.filter(m => managerTypeTab === 'all' || m.model_type === managerTypeTab).length)"></span>
                                 </div>
                                 <button @click="loadHFModels()"
                                         class="px-3 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700
@@ -119,9 +135,9 @@
 
                                 <!-- Table Body -->
                                 <div class="divide-y divide-neutral-100">
-                                    <div x-show="sortedManagerModels.length === 0" class="px-6 py-10 text-center text-sm text-neutral-500"
+                                    <div x-show="sortedManagerModels.filter(m => managerTypeTab === 'all' || m.model_type === managerTypeTab).length === 0" class="px-6 py-10 text-center text-sm text-neutral-500"
                                          x-text="window.t('models.manager.no_match')"></div>
-                                    <template x-for="model in sortedManagerModels" :key="model.name">
+                                    <template x-for="model in sortedManagerModels.filter(m => managerTypeTab === 'all' || m.model_type === managerTypeTab)" :key="model.name">
                                         <div class="flex items-center gap-4 px-4 sm:px-6 py-3 hover:bg-neutral-50 transition-colors">
                                             <!-- Name -->
                                             <div class="min-w-0 flex-1 flex items-center gap-2">
@@ -144,6 +160,9 @@
                                                     <span class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-neutral-100 text-neutral-500 border border-neutral-200 truncate max-w-[120px]"
                                                           x-text="managerModelInfo(model.name)?.settings?.model_alias"></span>
                                                 </template>
+                                                <span x-show="model.params_formatted" x-cloak
+                                                      class="text-xs text-neutral-400 flex-shrink-0"
+                                                      x-text="model.params_formatted + ' ' + window.t('models.browse.params_suffix') + (model.active_params_formatted ? ' · ' + model.active_params_formatted + ' ' + window.t('models.browse.active_suffix') : '')"></span>
                                                 <button x-data="{ copied: false }"
                                                         @click.stop="copyToClipboard(managerModelInfo(model.name)?.settings?.model_alias || model.name); copied = true; setTimeout(() => copied = false, 2000)"
                                                         class="p-1 rounded-md transition-all flex-shrink-0"
