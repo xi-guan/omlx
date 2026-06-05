@@ -186,7 +186,6 @@
             mainTab: 'status',
 
             activeTab: 'global',
-            settingsDropdown: false,
             themeDropdown: false,
 
             // Global settings
@@ -237,6 +236,7 @@
                     splash: { available: false, path: null, auto_detected: null, version: null, label: null, reason: '', install_hint: '', models: [] },
                 },
                 ui: { language: 'en', dashboard_layout: null },
+                benchmark: { share_results: false },
                 idle_timeout: { idle_timeout_seconds: null },
                 system: { total_memory_bytes: 0, total_memory: '', auto_model_memory: '', ssd_total_bytes: 0, ssd_total: '' },
             },
@@ -487,7 +487,22 @@
 
             // Models sub-tab state
             modelsTab: 'manager',
-            modelsDropdown: false,
+            // Manager filter tab (by model_type): 'llm' | 'vlm' | 'embedding' | 'reranker' | 'audio_stt' | 'audio_tts' | 'audio_sts' | 'all'
+            managerTypeTab: 'llm',
+            managerTypeTabs: [
+                { id: 'llm',       labelKey: 'models.manager.tab.llm' },
+                { id: 'vlm',       labelKey: 'models.manager.tab.vlm' },
+                { id: 'embedding', labelKey: 'models.manager.tab.embedding' },
+                { id: 'reranker',  labelKey: 'models.manager.tab.reranker' },
+                { id: 'audio_stt', labelKey: 'models.manager.tab.stt' },
+                { id: 'audio_tts', labelKey: 'models.manager.tab.tts' },
+                { id: 'audio_sts', labelKey: 'models.manager.tab.sts' },
+                { id: 'all',       labelKey: 'models.manager.tab.all' },
+            ],
+            get filteredHfModels() {
+                if (this.managerTypeTab === 'all') return this.hfModels;
+                return this.hfModels.filter(m => m.model_type === this.managerTypeTab);
+            },
 
             // HF Mirror settings modal
             showHfMirrorModal: false,
@@ -568,43 +583,6 @@
             onboardingStartedEmpty: false,
             onboardingDismissed: false,
             onboardingReadyDismissed: false,
-
-            // ModelScope Downloader state
-            downloaderSource: 'hf',
-            msAvailable: false,
-            msInitialized: false,
-            msRepoId: '',
-            msToken: '',
-            msDownloading: false,
-            msTasks: [],
-            msError: '',
-            msSuccess: '',
-            _msRefreshTimer: null,
-
-            // MS Recommended models state
-            msRecommended: { trending: [], popular: [] },
-            msRecommendedLoaded: false,
-            msRecommendedLoading: false,
-            msRecommendedTab: 'trending',
-            msMlxOnly: true,
-
-            // MS Pagination state
-            msPage: { trending: 1, popular: 1, search: 1 },
-            msPageSize: 10,
-
-            // MS Search state
-            msSearchQuery: '',
-            msSearchSort: 'trending',
-            msSearchResults: [],
-            msSearchLoading: false,
-            msSearchLoaded: false,
-            msSearchHistory: JSON.parse(localStorage.getItem('msSearchHistory') || '[]'),
-            msSearchHistoryOpen: false,
-            msSearchDebounceTimer: null,
-
-            // MS Model detail modal
-            msModelDetail: null,
-            msModelDetailLoading: false,
 
             // oQ Quantizer state
             oqModels: [],
@@ -693,9 +671,8 @@
             // race a 409 on the server.
             benchOtherActive: null,
 
-            // Bench sub-tab & dropdown
+            // Bench sub-tab
             benchTab: 'throughput',
-            benchDropdown: false,
 
             // Context benchmark state
             ctxBenchModelId: '',
@@ -846,17 +823,6 @@
                     }
                 });
 
-                this.$watch('msMlxOnly', () => {
-                    this.msRecommended = { trending: [], popular: [] };
-                    this.msRecommendedLoaded = false;
-                    this.msSearchResults = [];
-                    this.msSearchLoaded = false;
-                    this.loadMsRecommendedModels();
-                    if (this.msSearchQuery.trim()) {
-                        this.searchMSModels();
-                    }
-                });
-
                 window.addEventListener('popstate', () => {
                     this.applyTabStateFromUrl();
                     this.settingsScrollToHash();
@@ -900,9 +866,6 @@
                     }
                     if (this.modelsTab === 'quantizer') {
                         loads.push(this.loadOQModels());
-                    }
-                    if (this.msInitialized && this.msAvailable) {
-                        loads.push(this.loadMSTasks());
                     }
                     await Promise.all(loads);
                     const hasActive = this.hfTasks.some(t =>
@@ -1295,6 +1258,7 @@
                             claude_code: { ...this.globalSettings.claude_code, ...data.claude_code },
                             integrations: { ...this.globalSettings.integrations, ...data.integrations },
                             external_engines: { ...this.globalSettings.external_engines, ...data.external_engines },
+                            benchmark: { ...this.globalSettings.benchmark, ...data.benchmark },
                             idle_timeout: { ...this.globalSettings.idle_timeout, ...data.idle_timeout },
                             system: { ...this.globalSettings.system, ...data.system },
                         };
@@ -4402,6 +4366,19 @@
                         ok: false,
                         message: window.t('settings.integrations.websearch.test_failed'),
                     };
+                }
+            },
+
+            async saveBenchmarkShareResults(enabled) {
+                this.globalSettings.benchmark.share_results = enabled;
+                try {
+                    await fetch('/admin/api/global-settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ benchmark_share_results: enabled }),
+                    });
+                } catch (err) {
+                    console.error('Failed to save benchmark share_results:', err);
                 }
             },
 
@@ -8117,8 +8094,6 @@
             closeModelDetail() {
                 this.hfModelDetail = null;
                 this.hfModelDetailLoading = false;
-                this.msModelDetail = null;
-                this.msModelDetailLoading = false;
             },
 
             formatFileSize(bytes) {
