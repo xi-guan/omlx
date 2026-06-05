@@ -878,6 +878,24 @@ class UsageSettings:
 
 
 @dataclass
+class BenchmarkSettings:
+    """Benchmark settings."""
+
+    # Opt-in upload of throughput results to the omlx.ai community leaderboard.
+    # Default off: nothing leaves the device unless the user enables it.
+    share_results: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return {"share_results": self.share_results}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> BenchmarkSettings:
+        """Create from dictionary."""
+        return cls(share_results=bool(data.get("share_results", False)))
+
+
+@dataclass
 class ClaudeCodeSettings:
     """Claude Code integration settings."""
 
@@ -1023,6 +1041,7 @@ class GlobalSettings:
     integrations: IntegrationSettings = field(default_factory=IntegrationSettings)
     ui: UISettings = field(default_factory=UISettings)
     usage: UsageSettings = field(default_factory=UsageSettings)
+    benchmark: BenchmarkSettings = field(default_factory=BenchmarkSettings)
     idle_timeout: ModelIdleTimeoutSettings = field(
         default_factory=ModelIdleTimeoutSettings
     )
@@ -1121,6 +1140,8 @@ class GlobalSettings:
                 self.ui = UISettings.from_dict(data["ui"])
             if "usage" in data:
                 self.usage = UsageSettings.from_dict(data["usage"])
+            if "benchmark" in data:
+                self.benchmark = BenchmarkSettings.from_dict(data["benchmark"])
             if "idle_timeout" in data:
                 self.idle_timeout = ModelIdleTimeoutSettings.from_dict(
                     data["idle_timeout"]
@@ -1494,6 +1515,7 @@ class GlobalSettings:
             "integrations": self.integrations.to_dict(),
             "ui": self.ui.to_dict(),
             "usage": self.usage.to_dict(),
+            "benchmark": self.benchmark.to_dict(),
             "idle_timeout": self.idle_timeout.to_dict(),
         }
 
@@ -1890,6 +1912,7 @@ class GlobalSettings:
             "integrations": self.integrations.to_dict(),
             "ui": self.ui.to_dict(),
             "usage": self.usage.to_dict(),
+            "benchmark": self.benchmark.to_dict(),
             "idle_timeout": self.idle_timeout.to_dict(),
         }
 
