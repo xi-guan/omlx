@@ -77,6 +77,19 @@ def _normalize_stt_generate_language(
     return normalized
 
 
+def _sensevoice_itn_default() -> bool:
+    """Default use_itn for SenseVoice: ITN adds punctuation and normalizes
+    numbers/dates. On by default; set OMLX_SENSEVOICE_ITN=0 to disable."""
+    import os
+
+    return os.environ.get("OMLX_SENSEVOICE_ITN", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Error helpers (#800): turn opaque mlx-audio/HF processor failures into
 # actionable RuntimeErrors that tell users which file is missing and where
@@ -664,6 +677,13 @@ class STTEngine(BaseNonStreamingEngine):
             if generate_language is not None:
                 gen_kwargs["language"] = generate_language
             gen_kwargs.update(_map_stt_prompt_kwargs(model, prompt))
+
+            # SenseVoice: enable ITN by default so output has punctuation and
+            # normalized numbers. Only this model family accepts use_itn, so we
+            # gate on the model name to avoid passing it to whisper/voxtral/etc.
+            # An explicit caller-provided use_itn still wins.
+            if "sensevoice" in self._model_name.lower():
+                gen_kwargs.setdefault("use_itn", _sensevoice_itn_default())
 
             result = model.generate(audio_path, **gen_kwargs)
 
