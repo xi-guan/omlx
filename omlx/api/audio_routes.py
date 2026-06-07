@@ -522,6 +522,7 @@ async def create_transcription(
     max_tokens: Optional[int] = Form(None, gt=0),
     word_timestamps: bool = Form(False),
     chunking_strategy: str | None = Form(None),
+    hotwords: Optional[str] = Form(None),
 ):
     """OpenAI-compatible audio transcription endpoint (Speech-to-Text).
 
@@ -631,6 +632,8 @@ async def create_transcription(
             transcribe_kwargs["max_tokens"] = effective_max_tokens
         if word_timestamps:
             transcribe_kwargs["word_timestamps"] = True
+        if hotwords:
+            transcribe_kwargs["hotwords"] = hotwords
 
         if stream:
             # Word timestamps only exist in the JSON segment response;
