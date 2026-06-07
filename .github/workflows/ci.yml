@@ -41,6 +41,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[mcp]"
+          # cn2an alone from the [audio] extra: pure-python, and without it the
+          # ITN tests skip instead of covering omlx/engine/itn.py
+          python -m pip install cn2an
           # pytest 9.2 ignores xdist 3.8's loadgroup node id suffix, so the gpu group runs in parallel.
           python -m pip install "pytest<9.2" pytest-asyncio pytest-xdist
 
