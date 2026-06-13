@@ -1354,6 +1354,13 @@ class TestUploadModelName:
         assert _upload_model_repo("Qwen3-30B-A3B") is None
 
 
+def _share_results_enabled_settings(enabled: bool = True):
+    """Return a callable for patching _get_global_settings."""
+    gs = MagicMock()
+    gs.benchmark.share_results = enabled
+    return lambda: gs
+
+
 class TestUploadToOmlxAi:
     @pytest.mark.asyncio
     async def test_upload_success(self):
@@ -1394,7 +1401,13 @@ class TestUploadToOmlxAi:
 
         mock_to_thread = AsyncMock(return_value=mock_response)
 
-        with patch("asyncio.to_thread", mock_to_thread):
+        with (
+            patch("asyncio.to_thread", mock_to_thread),
+            patch(
+                "omlx.admin.routes._get_global_settings",
+                _share_results_enabled_settings(True),
+            ),
+        ):
             await _upload_to_omlx_ai(run, mock_pool)
 
         # Collect all events from the replay log.
@@ -1454,7 +1467,13 @@ class TestUploadToOmlxAi:
 
         mock_to_thread = AsyncMock(return_value=mock_response)
 
-        with patch("asyncio.to_thread", mock_to_thread):
+        with (
+            patch("asyncio.to_thread", mock_to_thread),
+            patch(
+                "omlx.admin.routes._get_global_settings",
+                _share_results_enabled_settings(True),
+            ),
+        ):
             await _upload_to_omlx_ai(run, mock_pool)
 
         events = list(run.events)
@@ -1569,7 +1588,13 @@ class TestUploadToOmlxAi:
         mock_response.json.return_value = {"id": "abc", "url": "https://omlx.ai/b/abc"}
         mock_to_thread = AsyncMock(return_value=mock_response)
 
-        with patch("asyncio.to_thread", mock_to_thread):
+        with (
+            patch("asyncio.to_thread", mock_to_thread),
+            patch(
+                "omlx.admin.routes._get_global_settings",
+                _share_results_enabled_settings(True),
+            ),
+        ):
             await _upload_to_omlx_ai(run, mock_pool)
 
         mock_to_thread.assert_awaited_once()
@@ -1639,6 +1664,50 @@ class TestUploadToOmlxAi:
         # fabricated measurements.
         assert payload["system_metrics"] is None
         assert "peak_footprint_gb" in payload
+
+    @pytest.mark.asyncio
+    async def test_upload_skipped_when_share_results_disabled(self):
+        """Upload is skipped (no HTTP call) when share_results is off."""
+        from omlx.admin.benchmark import _upload_to_omlx_ai
+
+        run = BenchmarkRun(
+            bench_id="test-bench",
+            request=BenchmarkRequest(
+                model_id="Qwen3-30B-4bit",
+                prompt_lengths=[1024],
+            ),
+        )
+        run.results = [
+            {
+                "test_type": "single",
+                "pp": 1024,
+                "tg": 128,
+                "processing_tps": 500.0,
+                "gen_tps": 50.0,
+                "ttft_ms": 100.0,
+                "peak_memory_bytes": 0,
+            },
+        ]
+
+        mock_pool = MagicMock()
+        mock_pool._settings_manager = None
+        mock_to_thread = AsyncMock()
+
+        with (
+            patch("asyncio.to_thread", mock_to_thread),
+            patch(
+                "omlx.admin.routes._get_global_settings",
+                _share_results_enabled_settings(False),
+            ),
+        ):
+            await _upload_to_omlx_ai(run, mock_pool)
+
+        event_types = [e["type"] for e in run.events]
+        assert event_types == ["upload_skipped"]
+        skipped = next(e for e in run.events if e["type"] == "upload_skipped")
+        assert skipped["reason"] == "share_results_disabled"
+
+        mock_to_thread.assert_not_called()
 
 
 _CF_INTERSTITIAL = (

@@ -970,13 +970,15 @@ class TestMemorySettings:
         """Test serialization."""
         settings = MemorySettings(memory_guard_tier="safe")
         d = settings.to_dict()
-        assert d["memory_guard_tier"] == "safe"
-        assert d["prefill_memory_guard"] is True
-        assert d["soft_threshold"] == 0.85
-        assert d["hard_threshold"] == 0.95
-        # Removed fields must not be present.
-        assert "max_process_memory" not in d
-        assert "max_process_memory_is_explicit" not in d
+        assert d == {
+            "prefill_memory_guard": True,
+            "memory_guard_tier": "safe",
+            "memory_guard_custom_ceiling_gb": 0.0,
+            "soft_threshold": 0.85,
+            "hard_threshold": 0.95,
+            "prefill_safe_zone_ratio": 0.80,
+            "prefill_min_chunk_tokens": 32,
+        }
 
     def test_to_dict_guard_disabled(self):
         """Test serialization with prefill guard disabled."""
