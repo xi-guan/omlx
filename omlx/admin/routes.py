@@ -5264,9 +5264,11 @@ async def get_server_stats(
     resolved_model = resolve_model_id(model) or model if model else ""
     snapshot = metrics.get_snapshot(model_id=resolved_model, scope=scope)
 
+    from ..config import DEFAULT_SERVER_PORT
+
     global_settings = _get_global_settings()
     host = global_settings.server.host if global_settings else "127.0.0.1"
-    port = global_settings.server.port if global_settings else 8000
+    port = global_settings.server.port if global_settings else DEFAULT_SERVER_PORT
     api_key = global_settings.auth.api_key if global_settings else ""
 
     from ..utils.install import get_cli_prefix

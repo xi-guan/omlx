@@ -979,12 +979,14 @@ def cluster_command(args) -> int:
 
 
 def main():
+    from .config import DEFAULT_SERVER_PORT
+
     parser = argparse.ArgumentParser(
         description="omlx: Production-ready LLM server for Apple Silicon",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Examples:
-  omlx serve mlx-community/Llama-3.2-3B-Instruct-4bit --port 8000
+  omlx serve mlx-community/Llama-3.2-3B-Instruct-4bit --port {DEFAULT_SERVER_PORT}
   omlx launch codex --model qwen3.5
         """,
     )
@@ -1052,7 +1054,7 @@ Example directory structure:
         "--host", type=str, default=None, help="Host to bind (default: 127.0.0.1)"
     )
     serve_parser.add_argument(
-        "--port", type=int, default=None, help="Port to bind (default: 8000)"
+        "--port", type=int, default=None, help=f"Port to bind (default: {DEFAULT_SERVER_PORT})"
     )
     serve_parser.add_argument(
         "--log-level",
@@ -1254,7 +1256,7 @@ Example directory structure:
         "--port",
         type=int,
         default=None,
-        help="oMLX server port (default: from settings or 8000)",
+        help=f"oMLX server port (default: from settings or {DEFAULT_SERVER_PORT})",
     )
     launch_parser.add_argument(
         "--api-key",

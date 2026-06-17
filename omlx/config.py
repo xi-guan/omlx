@@ -58,12 +58,16 @@ def parse_size(size_str: str) -> int:
         raise ValueError(f"Invalid size string: {size_str}")
 
 
+# default port the server binds to; single source of truth across cli/settings/admin
+DEFAULT_SERVER_PORT = 8200
+
+
 @dataclass
 class ServerConfig:
     """Server configuration."""
 
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = DEFAULT_SERVER_PORT
     log_level: str = "info"
     cors_origins: List[str] = field(default_factory=lambda: ["*"])
 
