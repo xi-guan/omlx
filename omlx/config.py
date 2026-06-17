@@ -3,6 +3,9 @@
 
 import math
 
+# default port the server binds to; single source of truth across cli/settings/admin
+DEFAULT_SERVER_PORT = 8200
+
 
 def parse_size(size_str: str) -> int:
     """
