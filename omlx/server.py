@@ -9707,6 +9707,8 @@ async def init_mcp(config_path: str):
 
 def main():
     """Run the server (use omlx CLI instead)."""
+    from .config import DEFAULT_SERVER_PORT
+
     parser = argparse.ArgumentParser(
         description="oMLX multi-model serving for Apple Silicon",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -9737,7 +9739,7 @@ model and sampling defaults are managed via the admin page.
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
+        default=DEFAULT_SERVER_PORT,
         help="Port to bind to",
     )
     parser.add_argument(
