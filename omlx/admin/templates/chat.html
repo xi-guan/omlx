@@ -980,7 +980,7 @@
     <div class="sidebar-width h-full bg-surface border-r border-line flex flex-col sidebar-transition"
         :class="{ 'sidebar-hidden': !sidebarOpen }">
         <!-- Sidebar Header -->
-        <div class="h-14 px-4 border-b border-line flex-shrink-0 flex items-center" style="box-sizing: content-box;">
+        <div class="px-4 border-b border-line flex-shrink-0 flex items-center" style="height:56px">
             <div class="flex items-center justify-between w-full">
                 <div class="flex items-center gap-2">
                     <a href="/admin/dashboard">
@@ -989,7 +989,7 @@
                         <img x-show="activeTheme === 'dark'" src="/admin/static/navbar-logo-dark.svg" alt="oMLX"
                             class="w-[30px] h-[30px]" x-cloak>
                     </a>
-                    <div class="flex flex-col gap-0">
+                    <div class="flex items-center gap-2">
                         <a href="/admin/dashboard" class="font-semibold leading-tight">{{ t('chat.brand') }}</a>
                         <a :href="updateAvailable && releaseUrl ? releaseUrl : 'https://github.com/jundot/omlx'" target="_blank"
                            class="relative text-[10px] leading-none hover:opacity-80 transition-opacity"
@@ -1897,8 +1897,8 @@
         :class="{ 'right-sidebar-hidden': !rightSidebarOpen }" x-cloak>
 
         <!-- Sidebar Header with tabs -->
-        <div class="p-4 border-b border-line flex-shrink-0">
-            <div class="flex items-center gap-1">
+        <div class="px-4 border-b border-line flex-shrink-0 flex items-center" style="height:56px">
+            <div class="flex items-center gap-1 w-full">
                 <div class="flex flex-1 items-center gap-1">
                     <button @click="rightSidebarTab = 'settings'"
                         class="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors"
@@ -2164,7 +2164,7 @@
                         <option value="on_limit">{{ t('chat.thinking_mode.on_limited') }}</option>
                         <option value="off">{{ t('chat.thinking_mode.off') }}</option>
                     </select>
-                    <div x-show="thinkingModeValue() === 'on_limit'" x-collapse class="space-y-1">
+                    <div x-show="thinkingModeValue() === 'on_limit'" class="space-y-1">
                         <label class="text-[10px] font-bold uppercase tracking-wider block"
                             style="color: var(--text-secondary);">{{ t('chat.thinking_tokens') }}</label>
                         <input type="number" x-model.number="modelSettings.thinking_budget_tokens"
