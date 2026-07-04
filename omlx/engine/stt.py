@@ -90,6 +90,20 @@ def _sensevoice_itn_default() -> bool:
     )
 
 
+def _qwen3_itn_default() -> bool:
+    """Default ITN for Qwen3-ASR: the model emits chinese numerals, so we
+    post-process to arabic digits (the cloud service does this server-side).
+    On by default; set OMLX_QWEN3_ITN=0 to disable."""
+    import os
+
+    return os.environ.get("OMLX_QWEN3_ITN", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Error helpers (#800): turn opaque mlx-audio/HF processor failures into
 # actionable RuntimeErrors that tell users which file is missing and where
@@ -685,6 +699,13 @@ class STTEngine(BaseNonStreamingEngine):
             if "sensevoice" in self._model_name.lower():
                 gen_kwargs.setdefault("use_itn", _sensevoice_itn_default())
 
+            # Qwen3-ASR biases recognition toward vocabulary placed in its
+            # system prompt. Map hotwords (space/comma-separated) there. Other
+            # models don't take `hotwords`, so always strip it from gen_kwargs.
+            hotwords = gen_kwargs.pop("hotwords", None)
+            if hotwords and "qwen3" in self._model_name.lower():
+                gen_kwargs.setdefault("system_prompt", hotwords)
+
             result = model.generate(audio_path, **gen_kwargs)
 
             # result is typically an STTOutput dataclass with:
@@ -701,8 +722,24 @@ class STTEngine(BaseNonStreamingEngine):
                     _normalize_segment(s) for s in raw_segs
                 ] if raw_segs else []
 
+                text_out = result.text or ""
+
+                # Qwen3-ASR emits chinese numerals; apply ITN to match the
+                # cloud service's server-side normalization. Gated on model
+                # name so whisper/voxtral/sensevoice are untouched.
+                if (
+                    "qwen3" in self._model_name.lower()
+                    and _qwen3_itn_default()
+                ):
+                    from .itn import itn
+
+                    text_out = itn(text_out)
+                    for seg in segments:
+                        if isinstance(seg, dict) and seg.get("text"):
+                            seg["text"] = itn(seg["text"])
+
                 return {
-                    "text": result.text or "",
+                    "text": text_out,
                     "language": raw_lang,
                     "segments": segments,
                     "duration": getattr(
@@ -837,6 +874,10 @@ class STTEngine(BaseNonStreamingEngine):
         if generate_language is not None:
             gen_kwargs["language"] = generate_language
         gen_kwargs.update(_map_stt_prompt_kwargs(model, prompt))
+        # mirrors transcribe(): only qwen3 takes hotwords, via system_prompt
+        hotwords = gen_kwargs.pop("hotwords", None)
+        if hotwords and "qwen3" in self._model_name.lower():
+            gen_kwargs.setdefault("system_prompt", hotwords)
         gen_kwargs["stream"] = True
 
         iterator: Any = None

@@ -160,6 +160,8 @@ audio = [
     # WebSocket protocol impl for uvicorn (realtime STT endpoint). Pure
     # python; uvicorn's ws="auto" picks it up when installed.
     "wsproto==1.2.0",
+    # ITN for Qwen3-ASR chinese numerals (cloud does this server-side; see engine/itn.py)
+    "cn2an>=0.5.22",
 ]
 paroquant = [
     # ParoQuant runtime loader for paroquant-quantized models. Installed
