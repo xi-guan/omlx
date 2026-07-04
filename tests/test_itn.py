@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+"""Tests for Chinese ITN (inverse text normalization).
+
+Qwen3-ASR emits chinese numerals; omlx.engine.itn.itn converts them to arabic
+digits (matching the cloud service's server-side ITN) while a protect list
+shields idioms that look numeric but must stay verbatim (第一, 十分, 星期一).
+"""
+
+import pytest
+
+from omlx.engine.itn import itn
+
+
+@pytest.mark.parametrize(
+    "src,want",
+    [
+        # numbers that should convert
+        ("我有一百二十三块钱，电话是一三八", "我有123块钱，电话是138"),
+        ("我等了十三点五分钟", "我等了13.5分钟"),
+        ("两千零五年百分之三十", "2005年30%"),
+        # protected idioms — must stay verbatim
+        ("第一次见面", "第一次见面"),
+        ("十分感谢你", "十分感谢你"),
+        ("一下子就好了", "一下子就好了"),
+        ("星期一开会", "星期一开会"),
+        # mixed: protect 第一, still convert 九十八
+        ("他考了第一名得了九十八分", "他考了第一名得了98分"),
+        ("一般来说三个人", "一般来说3个人"),
+    ],
+)
+def test_itn_conversions_and_protections(src, want):
+    assert itn(src) == want
+
+
+def test_itn_empty_input():
+    assert itn("") == ""
+
+
+def test_itn_no_numbers_unchanged():
+    assert itn("今天天气不错") == "今天天气不错"
