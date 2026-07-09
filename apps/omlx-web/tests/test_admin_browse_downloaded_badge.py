@@ -71,8 +71,6 @@ state.hfTasks = [{repo_id: 'mlx-community/Qwen3-8B-4bit', status: 'failed'}];
 assert.equal(state.isModelDownloaded('mlx-community/Qwen3-8B-4bit'), false);
 state.hfTasks.push({repo_id: 'mlx-community/Qwen3-8B-4bit', status: 'completed'});
 assert.equal(state.isModelDownloaded('mlx-community/Qwen3-8B-4bit'), true);
-state.msTasks = [{repo_id: 'mlx-community/Qwen3-8B-4bit', status: 'downloading'}];
-assert.equal(state.isModelDownloaded('mlx-community/Qwen3-8B-4bit'), false);
 """
     result = subprocess.run(
         [node, "-e", script],

@@ -99,7 +99,6 @@ def server_sts_client():
         mock_state.process_memory_enforcer = None
         mock_state.gpu_power_limiter = None
         mock_state.hf_downloader = None
-        mock_state.ms_downloader = None
         mock_state.mcp_manager = None
         mock_state.api_key = None
         mock_state.settings_manager = MagicMock()
@@ -291,7 +290,6 @@ class TestSTSModelAliasResolution:
             mock_state.process_memory_enforcer = None
             mock_state.gpu_power_limiter = None
             mock_state.hf_downloader = None
-            mock_state.ms_downloader = None
             mock_state.mcp_manager = None
             mock_state.api_key = None
             mock_state.settings_manager = MagicMock()
@@ -322,7 +320,6 @@ class TestSTSModelAliasResolution:
             mock_state.process_memory_enforcer = None
             mock_state.gpu_power_limiter = None
             mock_state.hf_downloader = None
-            mock_state.ms_downloader = None
             mock_state.mcp_manager = None
             mock_state.api_key = None
             mock_state.settings_manager = MagicMock()
