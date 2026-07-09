@@ -958,16 +958,16 @@ def _install_spacy_model(export_dir: Path):
 
 
 # Packages to strip from the app bundle. These are transitive dependencies
-# pulled in by modelscope (datasets→pyarrow/pandas) but are NOT needed for
-# inference at runtime. torch/sympy kept as safety net in case any future
-# dependency pulls them in transitively. OpenCV (from mlx-vlm) stays because
-# video input decodes frames with cv2.
+# that are NOT needed for inference at runtime. torch/sympy and the datasets
+# chain are kept as a safety net in case any future dependency pulls them in
+# transitively. OpenCV (from mlx-vlm) stays because video input decodes frames
+# with cv2.
 _STRIP_PACKAGES = [
     "torch",
     "sympy",           # torch dep (safety net)
     "pyarrow",         # datasets dep
     "pandas",          # datasets dep
-    "datasets",        # modelscope dep, not used at inference
+    "datasets",        # not used at inference
     # dist-info dirs (matched by prefix)
 ]
 
