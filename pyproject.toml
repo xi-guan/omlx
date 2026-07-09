@@ -140,9 +140,6 @@ cluster = [
     # working (see omlx/cluster/discovery.py).
     "zeroconf>=0.131.0",
 ]
-modelscope = [
-    "modelscope>=1.28.0",
-]
 audio = [
     # mlx-audio from commit (1157775, v0.6.5) with tts/stt/sts extras
     "mlx-audio[tts,stt,sts] @ git+https://github.com/Neywa-Labs/mlx-audio@1157775c1999654b1ebde41ed03d88108e23f88b",
@@ -178,7 +175,6 @@ paroquant = [
 # separately with --no-deps after the shared layer resolves.
 bundle = [
     "mcp>=2.0.0,<3",
-    "modelscope>=1.28.0",
     # mlx-audio[tts,stt,sts] transitives:
     "scipy>=1.11.0",
     "librosa>=0.10.0",
