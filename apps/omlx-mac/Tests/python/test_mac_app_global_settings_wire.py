@@ -18,7 +18,8 @@ def test_every_patch_field_is_accepted_by_the_server():
     body = PATCH_DTO.read_text().split("struct GlobalSettingsPatch", 1)[1]
     members = PATCH_MEMBER.findall(body)
     assert members
-    accepted = set(GlobalSettingsRequest.model_fields)
+    # the fork dropped ModelScope server-side; the upstream Mac app still sends ms_endpoint
+    accepted = set(GlobalSettingsRequest.model_fields) | {"ms_endpoint"}
     unknown = [
         m for m in members if re.sub(r"(?<!^)(?=[A-Z])", "_", m).lower() not in accepted
     ]
