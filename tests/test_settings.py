@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from omlx.config import OMLXConfig
+from omlx.config import DEFAULT_SERVER_PORT, OMLXConfig
 from omlx.settings import (
     BURST_DECODE_MODES,
     DEFAULT_BURST_DECODE_MODE,
@@ -46,7 +46,7 @@ class TestServerSettings:
         """Test default values."""
         settings = ServerSettings()
         assert settings.host == "127.0.0.1"
-        assert settings.port == 8000
+        assert settings.port == DEFAULT_SERVER_PORT
         assert settings.log_level == "info"
         assert settings.cors_origins == ["*"]
         assert settings.sse_keepalive_mode == "chunk"
@@ -1113,7 +1113,7 @@ class TestGlobalSettings:
         with tempfile.TemporaryDirectory() as tmpdir:
             settings = GlobalSettings(base_path=Path(tmpdir))
             assert settings.server.host == "127.0.0.1"
-            assert settings.server.port == 8000
+            assert settings.server.port == DEFAULT_SERVER_PORT
             assert settings.memory.memory_guard_tier == "balanced"
             assert settings.scheduler.max_concurrent_requests == 8
             assert settings.scheduler.embedding_batch_size == 32
@@ -1357,7 +1357,7 @@ class TestGlobalSettings:
         with tempfile.TemporaryDirectory() as tmpdir:
             settings = GlobalSettings.load(base_path=tmpdir)
             assert settings.server.host == "127.0.0.1"
-            assert settings.server.port == 8000
+            assert settings.server.port == DEFAULT_SERVER_PORT
 
     def test_load_invalid_json_uses_defaults(self):
         """Test loading invalid JSON file logs warning and uses defaults."""
@@ -1367,7 +1367,7 @@ class TestGlobalSettings:
 
             settings = GlobalSettings.load(base_path=tmpdir)
             # Should use defaults due to parse error
-            assert settings.server.port == 8000
+            assert settings.server.port == DEFAULT_SERVER_PORT
 
     def test_save(self):
         """Test saving settings to file."""
@@ -2046,7 +2046,7 @@ class TestGlobalSettings:
             with patch.dict(os.environ, {"OMLX_PORT": "not-a-number"}, clear=False):
                 settings = GlobalSettings.load(base_path=tmpdir)
                 # Should keep default due to parse error
-                assert settings.server.port == 8000
+                assert settings.server.port == DEFAULT_SERVER_PORT
 
     def test_env_override_after_file(self):
         """Test env vars override file settings."""
@@ -2519,7 +2519,7 @@ class TestSettingsEdgeCases:
 
             settings = GlobalSettings.load(base_path=tmpdir)
             # Should use all defaults
-            assert settings.server.port == 8000
+            assert settings.server.port == DEFAULT_SERVER_PORT
             assert settings.server.host == "127.0.0.1"
 
     def test_partial_section_in_file(self):

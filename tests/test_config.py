@@ -9,6 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from omlx.config import (
+    DEFAULT_SERVER_PORT,
     parse_size,
     ServerConfig,
     ModelConfig,
@@ -95,7 +96,7 @@ class TestServerConfig:
         """Test default configuration values."""
         config = ServerConfig()
         assert config.host == "0.0.0.0"
-        assert config.port == 8000
+        assert config.port == DEFAULT_SERVER_PORT
         assert config.log_level == "info"
         assert config.cors_origins == ["*"]
 
@@ -287,7 +288,7 @@ class TestOMLXConfig:
         with patch.dict(os.environ, {}, clear=True):
             config = OMLXConfig.from_env()
             assert config.server.host == "0.0.0.0"
-            assert config.server.port == 8000
+            assert config.server.port == DEFAULT_SERVER_PORT
             # Issue #926: env default must be False to keep RCE surface closed.
             assert config.model.trust_remote_code is False
 
@@ -398,7 +399,7 @@ class TestOMLXConfig:
         assert "continuous_batching" in result
 
         assert result["server"]["host"] == "0.0.0.0"
-        assert result["server"]["port"] == 8000
+        assert result["server"]["port"] == DEFAULT_SERVER_PORT
 
     def test_to_dict_with_paged_ssd_cache_dir(self):
         """Test to_dict with paged SSD cache directory."""
