@@ -895,9 +895,6 @@
                     const hasActive = this.hfTasks.some(t =>
                         t.status === 'pending' || t.status === 'downloading');
                     if (hasActive) this.startHFRefresh();
-                    const hasMsActive = this.msTasks.some(t =>
-                        t.status === 'pending' || t.status === 'downloading');
-                    if (hasMsActive) this.startMSRefresh();
                     const hasOqActive = this.oqTasks.some(t =>
                         ['pending', 'loading', 'quantizing', 'saving'].includes(t.status));
                     if (hasOqActive) this.startOQRefresh();

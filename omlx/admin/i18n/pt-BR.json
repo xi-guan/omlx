@@ -156,7 +156,7 @@
   "models.manager.delete_no": "Não",
   "models.downloader.section_label": "Modelos",
   "models.downloader.heading": "Downloader de Modelos",
-  "models.downloader.description": "Baixe modelos do HuggingFace ou ModelScope e explore os modelos disponíveis.",
+  "models.downloader.description": "Baixe modelos do HuggingFace e explore os modelos disponíveis.",
   "models.downloader.source.hf": "HuggingFace",
   "models.downloader.source.ms": "ModelScope",
   "models.downloader.mirror_settings": "Configurações de Mirror",

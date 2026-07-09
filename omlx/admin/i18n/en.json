@@ -164,7 +164,7 @@
   "models.manager.delete_no": "No",
   "models.downloader.section_label": "Models",
   "models.downloader.heading": "Model Downloader",
-  "models.downloader.description": "Download models from HuggingFace or ModelScope and browse available models.",
+  "models.downloader.description": "Download models from HuggingFace and browse available models.",
   "models.downloader.source.hf": "HuggingFace",
   "models.downloader.source.ms": "ModelScope",
   "models.downloader.mirror_settings": "Mirror Settings",

@@ -164,7 +164,7 @@
   "models.manager.delete_no": "Нет",
   "models.downloader.section_label": "Модели",
   "models.downloader.heading": "Загрузчик моделей",
-  "models.downloader.description": "Загружайте модели из HuggingFace или ModelScope и просматривайте доступные варианты.",
+  "models.downloader.description": "Загружайте модели из HuggingFace и просматривайте доступные варианты.",
   "models.downloader.source.hf": "HuggingFace",
   "models.downloader.source.ms": "ModelScope",
   "models.downloader.mirror_settings": "Настройки зеркала",

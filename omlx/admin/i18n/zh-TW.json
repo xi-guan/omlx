@@ -164,7 +164,7 @@
   "models.manager.delete_no": "否",
   "models.downloader.section_label": "模型",
   "models.downloader.heading": "模型下載工具",
-  "models.downloader.description": "從 HuggingFace 或魔搭社區下載模型並瀏覽可用模型。",
+  "models.downloader.description": "從 HuggingFace 下載模型並瀏覽可用模型。",
   "models.downloader.source.hf": "HuggingFace",
   "models.downloader.source.ms": "魔搭社區",
   "models.downloader.mirror_settings": "鏡像設定",

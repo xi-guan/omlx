@@ -164,7 +164,7 @@
   "models.manager.delete_no": "いいえ",
   "models.downloader.section_label": "モデル",
   "models.downloader.heading": "モデルダウンロード",
-  "models.downloader.description": "HuggingFaceまたはModelScopeからモデルをダウンロードし、利用可能なモデルを閲覧します。",
+  "models.downloader.description": "HuggingFaceからモデルをダウンロードし、利用可能なモデルを閲覧します。",
   "models.downloader.source.hf": "HuggingFace",
   "models.downloader.source.ms": "ModelScope",
   "models.downloader.mirror_settings": "ミラー設定",
