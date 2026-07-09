@@ -101,7 +101,7 @@
     const DASHBOARD_SETTINGS_TABS = new Set(['global', 'integrations', 'models']);
     const DASHBOARD_MODELS_TABS = new Set(['manager', 'downloader', 'quantizer', 'uploader']);
     const DASHBOARD_BENCH_TABS = new Set(['throughput', 'accuracy', 'context']);
-    const DASHBOARD_DOWNLOADER_SOURCES = new Set(['hf', 'ms', 'recommended']);
+    const DASHBOARD_DOWNLOADER_SOURCES = new Set(['hf', 'recommended']);
     const THEME_STORAGE_KEY = 'omlx-chat-theme';
     const ENHANCED_READABILITY_KEY = 'omlx-enhanced-readability';
 
@@ -584,6 +584,9 @@
             onboardingDismissed: false,
             onboardingReadyDismissed: false,
 
+            // Downloader source: 'hf' | 'recommended'
+            downloaderSource: 'hf',
+
             // oQ Quantizer state
             oqModels: [],
             oqAllModels: [],
@@ -871,9 +874,6 @@
                     const hasActive = this.hfTasks.some(t =>
                         t.status === 'pending' || t.status === 'downloading');
                     if (hasActive) this.startHFRefresh();
-                    const hasMsActive = this.msTasks.some(t =>
-                        t.status === 'pending' || t.status === 'downloading');
-                    if (hasMsActive) this.startMSRefresh();
                     const hasOqActive = this.oqTasks.some(t =>
                         ['pending', 'loading', 'quantizing', 'saving'].includes(t.status));
                     if (hasOqActive) this.startOQRefresh();
@@ -1132,7 +1132,6 @@
                 if (!DASHBOARD_DOWNLOADER_SOURCES.has(source)) return;
                 this.downloaderSource = source;
                 this.syncTabStateToUrl();
-                if (source === 'ms') this.initMsDownloader();
                 if (source === 'recommended') this.loadRecommendations();
             },
 
