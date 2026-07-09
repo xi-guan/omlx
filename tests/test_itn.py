@@ -10,6 +10,11 @@ import pytest
 
 from omlx.engine.itn import itn
 
+# itn() returns its input unchanged when cn2an is missing, which would silently
+# turn the protect-list cases below into vacuous passes. cn2an ships in the
+# [audio] extra, so skip rather than assert against the degraded no-op path.
+pytest.importorskip("cn2an")
+
 
 @pytest.mark.parametrize(
     "src,want",
