@@ -59,11 +59,14 @@
     </script>
 
     <style>
-        /* Lucide icon fallback: ensure unprocessed <i data-lucide> elements
-           are inline-block so Tailwind w-*/h-* classes apply even if
-           lucide.min.js fails to load or createIcons() hasn't run yet. */
+        /* Lucide icon fallback: sizing classes need a non-inline box, and the
+           display must match the block that Preflight gives the <svg> which
+           replaces it — inline-block would add baseline descender space and
+           grow the row until the 300ms poll swaps it (visible jump whenever
+           Alpine x-for/x-if rebuilds a subtree). */
         [data-lucide] {
-            display: inline-block;
+            display: block;
+            vertical-align: middle;
         }
 
         /* Language-specific font stack + shared theme variables.
