@@ -1055,6 +1055,71 @@ class TestSTTEngineStreaming:
         assert generate_kwargs["system_prompt"] == "Vocabulary: omlx."
         assert "prompt" not in generate_kwargs
 
+    @pytest.mark.asyncio
+    async def test_native_stream_maps_hotwords_to_system_prompt(self, tmp_path):
+        """Hotwords bias native streaming like they do the one-shot path."""
+        from omlx.engine.stt import STTEngine
+
+        generate_kwargs = {}
+
+        class FakeModel:
+            def generate(
+                self, audio_path, *, stream=False, system_prompt=None, **kwargs
+            ):
+                generate_kwargs["system_prompt"] = system_prompt
+                generate_kwargs.update(kwargs)
+                return iter([
+                    SimpleNamespace(
+                        text="ok", is_final=True, language="zh",
+                        prompt_tokens=0, generation_tokens=0,
+                    ),
+                ])
+
+        audio_path = tmp_path / "sample.wav"
+        audio_path.write_bytes(TINY_WAV)
+
+        engine = STTEngine("qwen3-asr")
+        engine._model = FakeModel()
+
+        chunks = [
+            c async for c in engine.transcribe_stream(
+                str(audio_path), hotwords="omlx MLX"
+            )
+        ]
+
+        assert chunks[0]["text"] == "ok"
+        assert generate_kwargs["system_prompt"] == "omlx MLX"
+        assert "hotwords" not in generate_kwargs
+
+    @pytest.mark.asyncio
+    async def test_native_stream_strips_hotwords_for_other_backends(self, tmp_path):
+        """Backends without a hotwords kwarg must not receive it (strict signature
+        makes an unstripped hotwords raise TypeError)."""
+        from omlx.engine.stt import STTEngine
+
+        class FakeModel:
+            def generate(self, audio_path, *, stream=False):
+                return iter([
+                    SimpleNamespace(
+                        text="ok", is_final=True, language="en",
+                        prompt_tokens=0, generation_tokens=0,
+                    ),
+                ])
+
+        audio_path = tmp_path / "sample.wav"
+        audio_path.write_bytes(TINY_WAV)
+
+        engine = STTEngine("whisper-large-v3")
+        engine._model = FakeModel()
+
+        chunks = [
+            c async for c in engine.transcribe_stream(
+                str(audio_path), hotwords="omlx MLX"
+            )
+        ]
+
+        assert chunks[0]["text"] == "ok"
+
 
 # ---------------------------------------------------------------------------
 # TestSTTEndpointStreaming
