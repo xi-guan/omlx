@@ -52,12 +52,12 @@
                         </div>
                     </div>
 
-                    <!-- Three Stat Cards -->
+                    <!-- Three Stat Cards; number row height is pinned so getStatFontClass size swaps don't shift the page -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
                         <!-- Total Prefill Tokens -->
                         <div class="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-8 text-center">
                             <p class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">{{ t('status.stat.total_tokens') }}</p>
-                            <p class="font-bold tracking-tight text-neutral-900 transition-all"
+                            <p class="font-bold tracking-tight text-neutral-900 transition-all flex items-center justify-center" style="height:3rem"
                                :class="getStatFontClass((statsScope === 'alltime' ? alltimeStats : stats).total_prompt_tokens)"
                                x-text="formatNumber((statsScope === 'alltime' ? alltimeStats : stats).total_prompt_tokens)"></p>
                         </div>
@@ -65,7 +65,7 @@
                         <!-- Cached Tokens Served -->
                         <div class="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-8 text-center">
                             <p class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">{{ t('status.stat.cached_tokens') }}</p>
-                            <p class="font-bold tracking-tight text-neutral-900 transition-all"
+                            <p class="font-bold tracking-tight text-neutral-900 transition-all flex items-center justify-center" style="height:3rem"
                                :class="getStatFontClass((statsScope === 'alltime' ? alltimeStats : stats).total_cached_tokens)"
                                x-text="formatNumber((statsScope === 'alltime' ? alltimeStats : stats).total_cached_tokens)"></p>
                         </div>
@@ -73,7 +73,7 @@
                         <!-- Cache Efficiency -->
                         <div class="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-8 text-center">
                             <p class="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">{{ t('status.stat.cache_efficiency') }}</p>
-                            <p class="font-bold tracking-tight text-neutral-900 transition-all"
+                            <p class="font-bold tracking-tight text-neutral-900 transition-all flex items-center justify-center" style="height:3rem"
                                :class="getStatFontClass((statsScope === 'alltime' ? alltimeStats : stats).cache_efficiency)"
                                x-text="(statsScope === 'alltime' ? alltimeStats : stats).cache_efficiency.toFixed(1) + '%'"></p>
                         </div>
