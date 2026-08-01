@@ -229,7 +229,6 @@ class TestApplyModelDirsRuntime:
 
         monkeypatch.setattr(Path, "iterdir", fake_iterdir)
         monkeypatch.setattr(admin_routes, "_hf_downloader", None)
-        monkeypatch.setattr(admin_routes, "_ms_downloader", None)
         monkeypatch.setattr(admin_routes, "_oq_manager", None)
         monkeypatch.setattr(admin_routes, "_hf_uploader", None)
 
@@ -256,7 +255,6 @@ class TestApplyModelDirsRuntime:
         primary = tmp_path / "new-primary"
 
         monkeypatch.setattr(admin_routes, "_hf_downloader", None)
-        monkeypatch.setattr(admin_routes, "_ms_downloader", None)
         monkeypatch.setattr(admin_routes, "_oq_manager", None)
         monkeypatch.setattr(admin_routes, "_hf_uploader", None)
 

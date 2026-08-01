@@ -949,7 +949,6 @@ class TestServeCommandFunctions:
             "mcp_config": None,
             "hf_endpoint": None,
             "hf_cache_enabled": None,
-            "ms_endpoint": None,
             "http_proxy": None,
             "https_proxy": None,
             "no_proxy": None,
@@ -969,7 +968,6 @@ class TestServeCommandFunctions:
             host=host, port=port, log_level="info", burst_decode_mode="balanced"
         )
         settings.huggingface = SimpleNamespace(endpoint=None, hf_cache_enabled=True)
-        settings.modelscope = SimpleNamespace(endpoint=None)
         settings.network = SimpleNamespace(
             http_proxy=None,
             https_proxy=None,
@@ -1232,7 +1230,6 @@ class TestHasCliOverrides:
             "mcp_config": None,
             "hf_endpoint": None,
             "hf_cache_enabled": None,
-            "ms_endpoint": None,
             "http_proxy": None,
             "https_proxy": None,
             "no_proxy": None,

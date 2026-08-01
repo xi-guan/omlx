@@ -67,7 +67,6 @@ def _has_cli_overrides(args) -> bool:
         "mcp_config",
         "hf_endpoint",
         "hf_cache_enabled",
-        "ms_endpoint",
         "http_proxy",
         "https_proxy",
         "no_proxy",
@@ -157,10 +156,6 @@ def serve_command(args):
     # Apply HuggingFace endpoint if configured
     if settings.huggingface.endpoint:
         os.environ["HF_ENDPOINT"] = settings.huggingface.endpoint
-
-    # Apply ModelScope endpoint if configured
-    if settings.modelscope.endpoint:
-        os.environ["MODELSCOPE_DOMAIN"] = settings.modelscope.endpoint
 
     # Apply proxy/TLS settings if configured
     if settings.network.http_proxy:
@@ -1172,14 +1167,6 @@ Example directory structure:
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Discover models from the standard HuggingFace Hub local cache (default: enabled)",
-    )
-
-    # ModelScope options
-    serve_parser.add_argument(
-        "--ms-endpoint",
-        type=str,
-        default=None,
-        help="Custom ModelScope Hub endpoint URL",
     )
 
     # Network options
