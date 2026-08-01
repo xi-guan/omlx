@@ -104,6 +104,20 @@ def _qwen3_itn_default() -> bool:
     )
 
 
+def _punc_default() -> bool:
+    """Default punctuation restoration for FireRedASR2-AED: its vocabulary has
+    no punctuation tokens, so upstream pairs it with a separate tagger.
+    On by default; set OMLX_PUNC=0 to disable."""
+    import os
+
+    return os.environ.get("OMLX_PUNC", "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Error helpers (#800): turn opaque mlx-audio/HF processor failures into
 # actionable RuntimeErrors that tell users which file is missing and where
@@ -724,11 +738,28 @@ class STTEngine(BaseNonStreamingEngine):
 
                 text_out = result.text or ""
 
-                # Qwen3-ASR emits chinese numerals; apply ITN to match the
-                # cloud service's server-side normalization. Gated on model
-                # name so whisper/voxtral/sensevoice are untouched.
+                # FireRedASR2-AED cannot punctuate at all (no punctuation in
+                # its vocabulary), so restore it the way upstream does, with a
+                # separate tagger. Runs before ITN: the tagger reads the text
+                # in the form the model wrote it.
                 if (
-                    "qwen3" in self._model_name.lower()
+                    "firered" in self._model_name.lower()
+                    and _punc_default()
+                ):
+                    from .punc import punctuate
+
+                    text_out = punctuate(text_out)
+                    for seg in segments:
+                        if isinstance(seg, dict) and seg.get("text"):
+                            seg["text"] = punctuate(seg["text"])
+
+                # Qwen3-ASR and FireRed both emit chinese numerals; apply ITN
+                # to match the cloud service's server-side normalization.
+                # Gated on model name so whisper/voxtral/sensevoice are
+                # untouched. OMLX_QWEN3_ITN gates both.
+                if (
+                    ("qwen3" in self._model_name.lower()
+                     or "firered" in self._model_name.lower())
                     and _qwen3_itn_default()
                 ):
                     from .itn import itn
