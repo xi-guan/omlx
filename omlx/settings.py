@@ -705,22 +705,6 @@ class HuggingFaceSettings:
 
 
 @dataclass
-class ModelScopeSettings:
-    """ModelScope Hub configuration settings."""
-
-    endpoint: str = ""  # Empty string = use default (https://modelscope.cn)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {"endpoint": self.endpoint}
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ModelScopeSettings:
-        """Create from dictionary."""
-        return cls(endpoint=data.get("endpoint", ""))
-
-
-@dataclass
 class NetworkSettings:
     """Network proxy and TLS trust settings."""
 
@@ -1033,7 +1017,6 @@ class GlobalSettings:
     auth: AuthSettings = field(default_factory=AuthSettings)
     mcp: MCPSettings = field(default_factory=MCPSettings)
     huggingface: HuggingFaceSettings = field(default_factory=HuggingFaceSettings)
-    modelscope: ModelScopeSettings = field(default_factory=ModelScopeSettings)
     network: NetworkSettings = field(default_factory=NetworkSettings)
     sampling: SamplingSettings = field(default_factory=SamplingSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
@@ -1124,8 +1107,6 @@ class GlobalSettings:
                 self.mcp = MCPSettings.from_dict(data["mcp"])
             if "huggingface" in data:
                 self.huggingface = HuggingFaceSettings.from_dict(data["huggingface"])
-            if "modelscope" in data:
-                self.modelscope = ModelScopeSettings.from_dict(data["modelscope"])
             if "network" in data:
                 self.network = NetworkSettings.from_dict(data["network"])
             if "sampling" in data:
@@ -1279,10 +1260,6 @@ class GlobalSettings:
                 "yes",
                 "on",
             }
-
-        # ModelScope settings
-        if ms_endpoint := os.getenv("OMLX_MS_ENDPOINT"):
-            self.modelscope.endpoint = ms_endpoint
 
         # Network settings
         if http_proxy := os.getenv("OMLX_HTTP_PROXY"):
@@ -1439,10 +1416,6 @@ class GlobalSettings:
         if hasattr(args, "hf_cache_enabled") and args.hf_cache_enabled is not None:
             self.huggingface.hf_cache_enabled = args.hf_cache_enabled
 
-        # ModelScope settings
-        if hasattr(args, "ms_endpoint") and args.ms_endpoint is not None:
-            self.modelscope.endpoint = args.ms_endpoint
-
         # Network settings
         if hasattr(args, "http_proxy") and args.http_proxy is not None:
             self.network.http_proxy = args.http_proxy
@@ -1507,7 +1480,6 @@ class GlobalSettings:
             "auth": self.auth.to_dict(),
             "mcp": self.mcp.to_dict(),
             "huggingface": self.huggingface.to_dict(),
-            "modelscope": self.modelscope.to_dict(),
             "network": self.network.to_dict(),
             "sampling": self.sampling.to_dict(),
             "logging": self.logging.to_dict(),
@@ -1825,15 +1797,6 @@ class GlobalSettings:
                     "(must start with http:// or https://)"
                 )
 
-        # ModelScope validation
-        if self.modelscope.endpoint:
-            endpoint = self.modelscope.endpoint.strip()
-            if endpoint and not endpoint.startswith(("http://", "https://")):
-                errors.append(
-                    f"Invalid modelscope endpoint: '{endpoint}' "
-                    "(must start with http:// or https://)"
-                )
-
         # Network proxy validation
         if self.network.http_proxy:
             proxy = self.network.http_proxy.strip()
@@ -1904,7 +1867,6 @@ class GlobalSettings:
             "auth": self.auth.to_dict(),
             "mcp": self.mcp.to_dict(),
             "huggingface": self.huggingface.to_dict(),
-            "modelscope": self.modelscope.to_dict(),
             "network": self.network.to_dict(),
             "sampling": self.sampling.to_dict(),
             "logging": self.logging.to_dict(),
