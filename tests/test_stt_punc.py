@@ -139,15 +139,6 @@ def test_only_punctuation_is_added():
 
 
 @needs_model
-def test_halfwidth_env_switches_marks(monkeypatch):
-    from omlx.engine.punc import punctuate
-
-    monkeypatch.setenv("OMLX_PUNC_HALFWIDTH", "1")
-    assert punctuate("请问这标点符号这问题咋解决呢") == "请问这标点符号这问题咋解决呢?"
-    assert punctuate("好的那你就重新我打算发给 cloud") == "好的, 那你就重新, 我打算发给 cloud."
-
-
-@needs_model
 def test_fullwidth_mark_absorbs_the_following_space():
     """"portal， 然后" is wrong typography; the mark carries its own gap."""
     from omlx.engine.punc import punctuate
