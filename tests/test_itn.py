@@ -31,6 +31,24 @@ pytest.importorskip("cn2an")
         # mixed: protect 第一, still convert 九十八
         ("他考了第一名得了九十八分", "他考了第一名得了98分"),
         ("一般来说三个人", "一般来说3个人"),
+        # a lone 一 is the article / reduplication marker, not a digit
+        ("另外一个方式", "另外一个方式"),
+        ("你再想一想", "你再想一想"),
+        ("保持一致", "保持一致"),
+        ("这是唯一的统一入口", "这是唯一的统一入口"),
+        ("一一对应", "一一对应"),
+        ("其中之一", "其中之一"),
+        # ... but a 一 next to another numeral really is one
+        ("电话是一三八", "电话是138"),
+        ("二十一个人", "21个人"),
+        ("十分之一", "1/10"),
+        ("十一月", "11月"),
+        # adjacent-digit pairs are approximations, not two-digit numbers
+        ("距离上次两三周了", "距离上次两三周了"),
+        ("三四天以后", "三四天以后"),
+        ("三四十个人", "三四十个人"),
+        ("一两个问题", "一两个问题"),
+        ("十几个和几十个", "十几个和几十个"),
     ],
 )
 def test_itn_conversions_and_protections(src, want):

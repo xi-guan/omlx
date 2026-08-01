@@ -13,13 +13,21 @@ import re
 # Spans that contain number characters but are not quantities. Matched and
 # masked before cn2an runs, then restored unchanged. Order matters: longer /
 # more specific patterns should appear before the bare characters they contain.
+_NUM = "零一二三四五六七八九十百千万亿两"
+
 _PROTECT_PATTERNS = [
     r"第[一二三四五六七八九十百千零两]+",  # ordinals: 第一, 第二十
     r"十分(?![一二三四五六七八九十之])",  # 十分(感谢); keep 十分钟/十分之一 convertible
-    r"一下", r"一些", r"一旦", r"一直", r"一般", r"一起",
-    r"一样", r"一边", r"一切", r"一定", r"一点", r"一会",
     r"星期[一二三四五六日天]", r"周[一二三四五六日天]",
     r"初[一二三四五六七八九十]",  # lunar dates: 初一
+    # adjacent-digit pairs are an approximation ("two or three weeks"), not a
+    # two-digit number; the trailing 十 keeps 三四十 whole
+    r"(?:一两|两三|三四|四五|五六|六七|七八|八九)十?",
+    r"十几", r"几十", r"一一",
+    # a lone 一 is the article "a/an" or a reduplication marker, never a written
+    # digit: 另外一个, 保持一致, 想一想, 唯一. Adjacency to another numeral means
+    # it really is one (一百二十三, 十一, 电话是一三八), and 分之一 stays a fraction
+    rf"(?<![{_NUM}点])(?<!分之)一(?![{_NUM}]|点[{_NUM}])",
 ]
 
 _PROTECT_RE = [re.compile(p) for p in _PROTECT_PATTERNS]
