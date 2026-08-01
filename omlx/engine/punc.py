@@ -26,19 +26,8 @@ _MAX_TOKENS = 510
 # text that already carries any of these is passed through untouched
 _EXISTING = "，。？！,.?!"
 
+# no trailing space: the mark lands before the source's own word gap
 _HALFWIDTH = {"，": ",", "。": ".", "？": "?", "！": "!"}
-
-
-def _halfwidth_default() -> bool:
-    """Use ascii marks even in chinese text. Off by default (chinese prose
-    normally takes full-width); set OMLX_PUNC_HALFWIDTH=1 for the mixed
-    zh/en style that writes "好的, 那你" rather than "好的，那你"."""
-    return os.environ.get("OMLX_PUNC_HALFWIDTH", "0").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
 
 _lock = threading.Lock()
 _loaded: tuple | None = None
@@ -125,21 +114,13 @@ def punctuate(text: str) -> str:
         if not marks:
             return text
 
-        halfwidth = text.isascii() or _halfwidth_default()
+        ascii_only = text.isascii()
         out, prev = [], 0
         for offset, mark in marks:
             out.append(text[prev:offset])
-            follows_space = text[offset : offset + 1] == " "
-            if halfwidth:
-                out.append(_HALFWIDTH[mark])
-                # ascii marks need the gap the source may not have
-                if not follows_space:
-                    out.append(" ")
-                prev = offset
-            else:
-                out.append(mark)
-                # a full-width mark already carries its own trailing space
-                prev = offset + 1 if follows_space else offset
+            out.append(_HALFWIDTH[mark] if ascii_only else mark)
+            # a full-width mark already carries its own trailing space
+            prev = offset + 1 if not ascii_only and text[offset : offset + 1] == " " else offset
         out.append(text[prev:])
         return "".join(out).strip()
     except Exception as exc:
