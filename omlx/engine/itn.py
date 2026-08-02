@@ -22,12 +22,15 @@ _PROTECT_PATTERNS = [
     r"初[一二三四五六七八九十]",  # lunar dates: 初一
     # adjacent-digit pairs are an approximation ("two or three weeks"), not a
     # two-digit number; the trailing 十 keeps 三四十 whole
-    r"(?:一两|两三|三四|四五|五六|六七|七八|八九)十?",
+    r"(?:一两|两三|三四|三五|四五|五六|五七|六七|七八|八九)十?",
     r"十几", r"几十", r"一一",
     # a lone 一 is the article "a/an" or a reduplication marker, never a written
     # digit: 另外一个, 保持一致, 想一想, 唯一. Adjacency to another numeral means
     # it really is one (一百二十三, 十一, 电话是一三八), and 分之一 stays a fraction
     rf"(?<![{_NUM}点])(?<!分之)一(?![{_NUM}]|点[{_NUM}])",
+    # a lone 两 is the measure-word "two of": 两个, 等两天, 说两句. It is a real
+    # digit only in front of a magnitude: 两千零五年, 两百三十
+    rf"(?<![{_NUM}])两(?![百千万亿])",
 ]
 
 _PROTECT_RE = [re.compile(p) for p in _PROTECT_PATTERNS]

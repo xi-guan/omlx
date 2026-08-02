@@ -49,6 +49,16 @@ pytest.importorskip("cn2an")
         ("三四十个人", "三四十个人"),
         ("一两个问题", "一两个问题"),
         ("十几个和几十个", "十几个和几十个"),
+        ("三五分钟就好", "三五分钟就好"),
+        ("五七个人", "五七个人"),
+        # a lone 两 is the measure word, not a digit
+        ("给我两个例子", "给我两个例子"),
+        ("等两天再说", "等两天再说"),
+        ("我说两句", "我说两句"),
+        ("过两周看看", "过两周看看"),
+        # ... but 两 in front of a magnitude is a real digit
+        ("两千零五年", "2005年"),
+        ("两百三十块", "230块"),
     ],
 )
 def test_itn_conversions_and_protections(src, want):
