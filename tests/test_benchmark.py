@@ -1657,7 +1657,13 @@ class TestUploadToOmlxAi:
         mock_response.json.return_value = {"id": "abc", "url": "https://omlx.ai/b/abc"}
         mock_to_thread = AsyncMock(return_value=mock_response)
 
-        with patch("asyncio.to_thread", mock_to_thread):
+        with (
+            patch("asyncio.to_thread", mock_to_thread),
+            patch(
+                "omlx.admin.routes._get_global_settings",
+                _share_results_enabled_settings(True),
+            ),
+        ):
             await _upload_to_omlx_ai(run, mock_pool)
 
         payload = mock_to_thread.await_args.kwargs["json"]
