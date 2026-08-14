@@ -13,7 +13,14 @@ from pathlib import Path
 _ALPINE_MAGICS = {"$nextTick", "$refs", "$watch", "$el", "$dispatch", "$store"}
 
 # Assigned lazily and never rendered, so they need no reactive declaration.
-_UNDECLARED_OK = {"_accPollTimer", "uploadRedownloadNotice"}
+_UNDECLARED_OK = {
+    "_accPollTimer",
+    "uploadRedownloadNotice",
+    "_notificationTimer",
+    "_clusterProbeFailureCount",
+    "_clusterProbeHoldUntilMs",
+    "_clusterSplitTimer",
+}
 
 # Top-level members of the object literal returned by dashboard().
 _DECL_RE = re.compile(
