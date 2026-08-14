@@ -7160,6 +7160,21 @@
                 this.tip.visible = false;
             },
 
+            // upstream's cluster SSH handlers call this but never defined it;
+            // routed through the tip overlay so no extra markup is needed.
+            showNotification(message, type) {
+                if (!message) return;
+                if (this._notificationTimer) clearTimeout(this._notificationTimer);
+                this.tip = {
+                    visible: true,
+                    text: message,
+                    x: window.innerWidth / 2,
+                    y: 72,
+                };
+                const holdMs = type === 'error' ? 6000 : 3000;
+                this._notificationTimer = setTimeout(() => this.hideTip(), holdMs);
+            },
+
             isDiffusionModel(model) {
                 const modelType = String(model?.config_model_type || '')
                     .toLowerCase()
