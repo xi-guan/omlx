@@ -790,7 +790,7 @@ class TestMCPSettings:
 
         restored = GlobalSettings.load(base_path=tmp_path)
 
-        assert restored.server.port == 8000  # defaults, not the torn file
+        assert restored.server.port == DEFAULT_SERVER_PORT  # defaults, not the torn file
         assert not settings_file.exists()
         backups = list(tmp_path.glob("settings.json.corrupt-*"))
         assert len(backups) == 1

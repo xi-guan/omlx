@@ -432,6 +432,7 @@
             _clusterMemoryAllowancesLoaded: false,
             clusterBudgetsLoading: false,
             clusterBudgetsError: '',
+            _clusterBudgetsMeasured: false,
             // Legacy two-node split value retained for stored dashboard state.
             // New plans use one soft target per node so the same control works
             // for two, three, or more Macs.
