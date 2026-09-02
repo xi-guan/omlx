@@ -59,6 +59,16 @@ pytest.importorskip("cn2an")
         # ... but 两 in front of a magnitude is a real digit
         ("两千零五年", "2005年"),
         ("两百三十块", "230块"),
+        # 半 is the word "half", never the decimal 0.5
+        ("说了半天", "说了半天"),
+        ("等了半个小时", "等了半个小时"),
+        ("大半天没动静", "大半天没动静"),
+        ("一个半小时", "一个半小时"),
+        ("两点半", "两点半"),
+        ("十六分半", "16分半"),
+        # ... but a spelled-out decimal still converts
+        ("零点五倍速", "0.5倍速"),
+        ("十三点五分钟", "13.5分钟"),
     ],
 )
 def test_itn_conversions_and_protections(src, want):
