@@ -10,7 +10,15 @@ import re
 from pathlib import Path
 
 # Alpine injects these into the component at runtime.
-_ALPINE_MAGICS = {"$nextTick", "$refs", "$watch", "$el", "$dispatch", "$store"}
+_ALPINE_MAGICS = {
+    "$nextTick",
+    "$refs",
+    "$watch",
+    "$el",
+    "$dispatch",
+    "$store",
+    "$root",
+}
 
 # Assigned lazily and never rendered, so they need no reactive declaration.
 _UNDECLARED_OK = {
@@ -19,6 +27,7 @@ _UNDECLARED_OK = {
     "_clusterProbeFailureCount",
     "_clusterProbeHoldUntilMs",
     "_clusterSplitTimer",
+    "_modelSettingsBaseline",
 }
 
 # Top-level members of the object literal returned by dashboard().
@@ -30,7 +39,7 @@ _USE_RE = re.compile(r"this\.([A-Za-z_$][\w$]*)")
 
 def _component_body() -> str:
     root = Path(__file__).resolve().parents[1]
-    lines = (root / "omlx/admin/static/js/dashboard.js").read_text().splitlines()
+    lines = (root / "apps/omlx-web/omlx_web/static/js/dashboard.js").read_text().splitlines()
     start = next(i for i, ln in enumerate(lines) if ln.strip() == "return {")
     end = next(i for i, ln in enumerate(lines) if ln == "    }")
     return "\n".join(lines[start:end])
