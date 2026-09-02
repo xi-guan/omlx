@@ -31,6 +31,9 @@ _PROTECT_PATTERNS = [
     # a lone 两 is the measure-word "two of": 两个, 等两天, 说两句. It is a real
     # digit only in front of a magnitude: 两千零五年, 两百三十
     rf"(?<![{_NUM}])两(?![百千万亿])",
+    # 半 is the word "half" (说了半天, 一个半小时); cn2an renders it 0.5, and no
+    # Chinese writer spells half a day "0.5天". A real decimal arrives as 零点五.
+    r"半",
 ]
 
 _PROTECT_RE = [re.compile(p) for p in _PROTECT_PATTERNS]
