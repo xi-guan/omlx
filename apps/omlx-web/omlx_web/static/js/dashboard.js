@@ -1169,7 +1169,7 @@
                 this.setModelsTab('downloader');
             },
 
-           async checkForUpdate() {
+            async checkForUpdate() {
                 try {
                     const resp = await fetch('/admin/api/update-check');
                     if (resp.ok) {
