@@ -2073,7 +2073,8 @@ class TestGetRecommendedModels:
 
         names = [m["name"] for m in result["trending"]]
         assert "ok" in names
-        assert "broken" in names
+        # unknown size cannot be checked against max_memory_bytes, so it is dropped
+        assert "broken" not in names
 
 
 # =============================================================================
