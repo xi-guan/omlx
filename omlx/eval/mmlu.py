@@ -54,6 +54,8 @@ class MMLUBenchmark(BaseBenchmark):
 
     name = "mmlu"
     quick_size = 300
+    # None = all 57 subjects; subclasses narrow to a subset
+    subjects: Optional[frozenset[str]] = None
 
     def __init__(self):
         self._few_shot_examples: dict[str, list[dict]] = {}
@@ -63,6 +65,8 @@ class MMLUBenchmark(BaseBenchmark):
         test_items = load_jsonl(DATA_DIR / "mmlu_test.jsonl")
         all_items = []
         for item in test_items:
+            if self.subjects is not None and item.get("subject") not in self.subjects:
+                continue
             choices = _parse_choices(item.get("choices", []))
             answer_idx = item.get("answer", 0)
             answer_letter = ANSWER_MAP.get(answer_idx, str(answer_idx))
@@ -89,7 +93,7 @@ class MMLUBenchmark(BaseBenchmark):
                     "answer": answer_letter,
                 })
 
-        logger.info(f"MMLU: loaded {len(all_items)} questions")
+        logger.info(f"{self.name}: loaded {len(all_items)} questions")
 
         self.dataset_total = len(all_items)
         if sample_size == 0:
@@ -127,3 +131,17 @@ class MMLUBenchmark(BaseBenchmark):
 
     def get_category(self, item: dict) -> Optional[str]:
         return item.get("subject")
+
+
+MEDICAL_SUBJECTS = frozenset({
+    "anatomy", "clinical_knowledge", "college_medicine", "college_biology",
+    "medical_genetics", "professional_medicine",
+})
+
+
+class MMLUMedicalBenchmark(MMLUBenchmark):
+    """MMLU restricted to its 6 medical subjects (1,089 questions)."""
+
+    name = "mmlu_medical"
+    quick_size = 300
+    subjects = MEDICAL_SUBJECTS
