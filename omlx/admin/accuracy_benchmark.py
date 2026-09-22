@@ -54,6 +54,7 @@ VALID_BENCHMARKS = [
     "hellaswag", "truthfulqa", "arc_challenge", "winogrande",
     "gsm8k", "mathqa", "humaneval", "mbpp", "livecodebench",
     "bbq", "safetybench",
+    "mmlu_medical", "pubmedqa", "medqa",
 ]
 
 # Sampling profile for an accuracy run. "deterministic" (default) runs greedy

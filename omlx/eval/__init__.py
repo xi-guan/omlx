@@ -18,8 +18,10 @@ from .kmmlu import KMMLUBenchmark
 from .livecodebench import LiveCodeBenchBenchmark
 from .mathqa import MathQABenchmark
 from .mbpp import MBPPBenchmark
-from .mmlu import MMLUBenchmark
+from .medqa import MedQABenchmark
+from .mmlu import MMLUBenchmark, MMLUMedicalBenchmark
 from .mmlu_pro import MMLUProBenchmark
+from .pubmedqa import PubMedQABenchmark
 from .safetybench import SafetyBenchBenchmark
 from .truthfulqa import TruthfulQABenchmark
 from .winogrande import WinograndeBenchmark
@@ -41,6 +43,9 @@ BENCHMARKS: dict[str, type[BaseBenchmark]] = {
     "livecodebench": LiveCodeBenchBenchmark,
     "bbq": BBQBenchmark,
     "safetybench": SafetyBenchBenchmark,
+    "mmlu_medical": MMLUMedicalBenchmark,
+    "pubmedqa": PubMedQABenchmark,
+    "medqa": MedQABenchmark,
 }
 
 __all__ = [
@@ -61,4 +66,7 @@ __all__ = [
     "LiveCodeBenchBenchmark",
     "BBQBenchmark",
     "SafetyBenchBenchmark",
+    "MMLUMedicalBenchmark",
+    "PubMedQABenchmark",
+    "MedQABenchmark",
 ]
