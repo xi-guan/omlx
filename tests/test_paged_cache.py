@@ -168,12 +168,12 @@ class TestCacheBlock:
         block.reset_hash()
         assert block.block_hash is None
 
-    def test_touch(self, monkeypatch):
+    def test_touch(self):
         """Test touch method updates last_access."""
         block = CacheBlock(block_id=0)
         old_access = block.last_access
 
-        monkeypatch.setattr("omlx.cache.paged_cache.time.time", lambda: old_access + 1)
+        # last_access is a monotonic tick here, not a clock, so touch() always bumps it
         block.touch()
 
         assert block.last_access > old_access

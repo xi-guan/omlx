@@ -10,7 +10,15 @@ import re
 from pathlib import Path
 
 # Alpine injects these into the component at runtime.
-_ALPINE_MAGICS = {"$nextTick", "$refs", "$watch", "$el", "$dispatch", "$store"}
+_ALPINE_MAGICS = {
+    "$nextTick",
+    "$refs",
+    "$watch",
+    "$el",
+    "$dispatch",
+    "$store",
+    "$root",
+}
 
 # Assigned lazily and never rendered, so they need no reactive declaration.
 _UNDECLARED_OK = {
@@ -20,6 +28,7 @@ _UNDECLARED_OK = {
     "_clusterProbeFailureCount",
     "_clusterProbeHoldUntilMs",
     "_clusterSplitTimer",
+    "_modelSettingsBaseline",
 }
 
 # Top-level members of the object literal returned by dashboard().

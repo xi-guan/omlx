@@ -128,6 +128,7 @@
 
             activeTab: 'global',
             themeDropdown: false,
+            benchDropdown: false,
 
             // Global settings
             globalSettings: {
@@ -828,7 +829,7 @@
                 if (event.key === 'Home') next = 0;
                 else if (event.key === 'End') next = tabs.length - 1;
                 else next = (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-                this.modelsDropdown = this.settingsDropdown = this.benchDropdown = false;
+                this.benchDropdown = false;
                 tabs[next].focus();
                 tabs[next].click();
             },
@@ -868,7 +869,7 @@
                 }
             },
 
-           async checkForUpdate() {
+            async checkForUpdate() {
                 try {
                     const resp = await fetch('/admin/api/update-check');
                     if (resp.ok) {
