@@ -585,8 +585,8 @@
 
             // Accuracy benchmark state
             accModelId: '',
-            accBenchmarks: { mmlu: true, mmlu_pro: false, kmmlu: false, cmmlu: false, jmmlu: false, hellaswag: false, truthfulqa: true, arc_challenge: false, winogrande: false, gsm8k: false, mathqa: false, humaneval: true, mbpp: false, livecodebench: false, bbq: false, safetybench: false },
-            accSampleSizes: { mmlu: 1000, mmlu_pro: 300, kmmlu: 300, cmmlu: 300, jmmlu: 300, hellaswag: 200, truthfulqa: 0, arc_challenge: 300, winogrande: 300, gsm8k: 100, mathqa: 300, humaneval: 0, mbpp: 200, livecodebench: 100, bbq: 300, safetybench: 300 },
+            accBenchmarks: { mmlu: true, mmlu_pro: false, kmmlu: false, cmmlu: false, jmmlu: false, hellaswag: false, truthfulqa: true, arc_challenge: false, winogrande: false, gsm8k: false, mathqa: false, humaneval: true, mbpp: false, livecodebench: false, bbq: false, safetybench: false, mmlu_medical: false, pubmedqa: false, medqa: false },
+            accSampleSizes: { mmlu: 1000, mmlu_pro: 300, kmmlu: 300, cmmlu: 300, jmmlu: 300, hellaswag: 200, truthfulqa: 0, arc_challenge: 300, winogrande: 300, gsm8k: 100, mathqa: 300, humaneval: 0, mbpp: 200, livecodebench: 100, bbq: 300, safetybench: 300, mmlu_medical: 300, pubmedqa: 300, medqa: 300 },
             accBenchmarkGroups: [
                 {
                     name: window.t('acc_bench.benchmarks.group_knowledge'),
@@ -627,6 +627,14 @@
                     benchmarks: [
                         { key: 'bbq', label: 'BBQ', desc: window.t('acc_bench.benchmarks.bbq_desc'), fullSize: 10864, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
                         { key: 'safetybench', label: 'SafetyBench', desc: window.t('acc_bench.benchmarks.safetybench_desc'), fullSize: 11435, sizes: [30, 50, 100, 200, 300, 500, 1000, 2000] },
+                    ],
+                },
+                {
+                    name: 'Medical',
+                    benchmarks: [
+                        { key: 'mmlu_medical', label: 'MMLU-Med', desc: 'MMLU · 6 medical subjects', fullSize: 1089, sizes: [30, 50, 100, 200, 300, 500, 1000] },
+                        { key: 'pubmedqa', label: 'PubMedQA', desc: 'Abstract reading · yes/no/maybe', fullSize: 1000, sizes: [30, 50, 100, 200, 300, 500, 1000] },
+                        { key: 'medqa', label: 'MedQA', desc: 'USMLE clinical · 4-way', fullSize: 1273, sizes: [30, 50, 100, 200, 300, 500, 1000] },
                     ],
                 },
             ],

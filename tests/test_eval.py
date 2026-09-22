@@ -9,7 +9,14 @@ from omlx.eval.datasets import deterministic_sample, stratified_sample
 from omlx.eval.gsm8k import GSM8KBenchmark, _extract_numeric_answer, _normalize_number
 from omlx.eval.hellaswag import HellaSwagBenchmark
 from omlx.eval.livecodebench import _extract_code
-from omlx.eval.mmlu import MMLUBenchmark, _parse_choices
+from omlx.eval.medqa import MedQABenchmark
+from omlx.eval.mmlu import (
+    MEDICAL_SUBJECTS,
+    MMLUBenchmark,
+    MMLUMedicalBenchmark,
+    _parse_choices,
+)
+from omlx.eval.pubmedqa import PubMedQABenchmark, _extract_decision
 from omlx.eval.truthfulqa import TruthfulQABenchmark
 
 
@@ -426,6 +433,115 @@ class TestSampling:
         # big should get ~20, small should get ~2
         assert big_count > small_count
         assert small_count >= 1
+
+
+# --- Medical Benchmark Tests ---
+
+
+class TestMMLUMedical:
+    async def test_load_only_medical_subjects(self):
+        bench = MMLUMedicalBenchmark()
+        items = await bench.load_dataset()
+        assert bench.dataset_total == 1089
+        assert {item["subject"] for item in items} == MEDICAL_SUBJECTS
+
+    async def test_sample_covers_every_subject(self):
+        bench = MMLUMedicalBenchmark()
+        items = await bench.load_dataset(sample_size=30)
+        assert len(items) <= 30
+        assert {item["subject"] for item in items} == MEDICAL_SUBJECTS
+
+    async def test_few_shot_examples_loaded_for_subject(self):
+        bench = MMLUMedicalBenchmark()
+        items = await bench.load_dataset(sample_size=10)
+        content = bench.format_prompt(items[0])[0]["content"]
+        assert content.count("Answer:") == 6
+
+    async def test_base_mmlu_unfiltered(self):
+        bench = MMLUBenchmark()
+        await bench.load_dataset(sample_size=10)
+        assert bench.dataset_total == 14042
+
+
+class TestPubMedQA:
+    def setup_method(self):
+        self.bench = PubMedQABenchmark()
+
+    def test_extract_decision(self):
+        assert _extract_decision("Yes") == "yes"
+        assert _extract_decision("No.") == "no"
+        assert _extract_decision("Maybe") == "maybe"
+        assert _extract_decision("The answer is: **maybe**") == "maybe"
+        assert _extract_decision("") == ""
+        assert _extract_decision("Unknown") == ""
+
+    def test_extract_decision_ignores_substrings(self):
+        assert _extract_decision("There is no evidence. Answer: yes") == "yes"
+        assert _extract_decision("Notably, yes") == "yes"
+
+    def test_extract_decision_last_wins(self):
+        assert _extract_decision("Maybe... on reflection, no") == "no"
+
+    def test_check_answer(self):
+        assert self.bench.check_answer("yes", {"answer": "yes"}) is True
+        assert self.bench.check_answer("no", {"answer": "yes"}) is False
+        assert self.bench.check_answer("", {"answer": "yes"}) is False
+
+    def test_format_prompt(self):
+        item = {
+            "question": "Does X cause Y?",
+            "contexts": ["Background text.", "Result text."],
+            "answer": "yes",
+        }
+        messages = self.bench.format_prompt(item)
+        assert len(messages) == 1
+        content = messages[0]["content"]
+        assert "Background text.\nResult text." in content
+        assert "Does X cause Y?" in content
+        assert content.endswith("Answer:")
+
+    def test_get_category_is_gold_label(self):
+        assert self.bench.get_category({"answer": "maybe"}) == "maybe"
+
+    async def test_sample_keeps_all_labels(self):
+        items = await self.bench.load_dataset(sample_size=30)
+        assert self.bench.dataset_total == 1000
+        assert {item["answer"] for item in items} == {"yes", "no", "maybe"}
+
+
+class TestMedQA:
+    def setup_method(self):
+        self.bench = MedQABenchmark()
+        self.item = {
+            "question": "Which drug?",
+            "options": {"A": "Aspirin", "B": "Metformin", "C": "Insulin", "D": "Warfarin"},
+            "answer": "B",
+            "meta_info": "step1",
+        }
+
+    def test_extract_answer(self):
+        assert self.bench.extract_answer("B", self.item) == "B"
+        assert self.bench.extract_answer("The answer is C", self.item) == "C"
+        assert self.bench.extract_answer("", self.item) == ""
+
+    def test_check_answer(self):
+        assert self.bench.check_answer("B", self.item) is True
+        assert self.bench.check_answer("A", self.item) is False
+
+    def test_format_prompt(self):
+        content = self.bench.format_prompt(self.item)[0]["content"]
+        assert "Which drug?" in content
+        assert "A. Aspirin" in content
+        assert "D. Warfarin" in content
+        assert content.endswith("Answer:")
+
+    def test_get_category(self):
+        assert self.bench.get_category(self.item) == "step1"
+
+    async def test_sample_covers_both_steps(self):
+        items = await self.bench.load_dataset(sample_size=30)
+        assert self.bench.dataset_total == 1273
+        assert {item["meta_info"] for item in items} == {"step1", "step2&3"}
 
 
 # --- Benchmark Registry Smoke Tests ---
