@@ -187,12 +187,11 @@ test('the rate reaches the progress line and both queue templates', () => {
         speed_bps: 45298483.2,
     }));
     assert.ok(line.includes('43.2 MB/s'), line);
-    // Each queue (HuggingFace and ModelScope) hands the task to the shared
-    // formatters: one progress line and one queued-row rate per queue.
+    // the HF-only queue shows formatProgress once and formatSpeed on both rows
     const template = fs.readFileSync(
         path.join(__dirname, '../omlx_web/templates/dashboard/_models.html'),
         'utf8'
     );
-    assert.ok(template.split('x-text="formatProgress(task)"').length - 1 >= 2);
+    assert.ok(template.split('x-text="formatProgress(task)"').length - 1 >= 1);
     assert.ok(template.split('formatSpeed(task)').length - 1 >= 2);
 });

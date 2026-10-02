@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Restart-surviving download queue, tested for both backends."""
+"""Restart-surviving download queue for the HF backend."""
 
 import asyncio
 import json
@@ -11,7 +11,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from omlx.admin.hf_downloader import DownloadStatus, DownloadTask, HFDownloader
-from omlx.admin.ms_downloader import MSDownloader
 
 
 def _write_rows(path: Path, rows) -> None:
@@ -25,7 +24,7 @@ def _read_rows(path: Path) -> list:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-@pytest.fixture(params=[HFDownloader, MSDownloader], ids=["hf", "ms"])
+@pytest.fixture(params=[HFDownloader], ids=["hf"])
 def queue(request, tmp_path):
     """A downloader whose run body only records the token it was given."""
     cls = request.param
@@ -37,9 +36,7 @@ def queue(request, tmp_path):
     async def _run(self, task_id, token):
         tokens["token"] = token
 
-    with patch.object(cls, "_run_download", new=_run), patch(
-        "omlx.admin.ms_downloader.MS_SDK_AVAILABLE", True
-    ):
+    with patch.object(cls, "_run_download", new=_run):
         yield SimpleNamespace(
             cls=cls,
             downloader=cls(model_dir=str(model_dir), tasks_file=tasks_file),

@@ -261,7 +261,7 @@ def test_module_entry_api_key_setup_end_to_end(tmp_path):
 
 @pytest.fixture
 def wired_downloaders(monkeypatch, tmp_path):
-    """Boot the real init_server() wiring with both downloaders present."""
+    """Boot the real init_server() wiring with the HF downloader present."""
     from omlx import server
     from omlx.settings import reset_settings
 
@@ -276,9 +276,6 @@ def wired_downloaders(monkeypatch, tmp_path):
     with (
         patch.object(sys, "argv", argv),
         patch("mlx.core.set_cache_limit"),
-        # The MS downloader is optional and its SDK is not installed here;
-        # the wiring under test only needs the constructor to run.
-        patch("omlx.admin.ms_downloader.MS_SDK_AVAILABLE", True),
         patch("uvicorn.run"),
     ):
         server.main()
@@ -299,8 +296,8 @@ def wired_downloaders(monkeypatch, tmp_path):
 def test_download_queues_are_wired_for_restart_resume(wired_downloaders):
     """Pin the wiring that makes restart-resume reachable end to end.
 
-    init_server() chooses the two queue file names and the lifespan awaits
-    restore_tasks() on each downloader. Either half missing silently turns a
+    init_server() chooses the queue file name and the lifespan awaits
+    restore_tasks() on the downloader. Either half missing silently turns a
     restart into an empty queue, and nothing else in the suite covers the
     lifespan's startup half.
     """
@@ -309,15 +306,11 @@ def test_download_queues_are_wired_for_restart_resume(wired_downloaders):
     server = wired_downloaders
     base = Path(server._server_state.global_settings.base_path)
     hf = server._server_state.hf_downloader
-    ms = server._server_state.ms_downloader
-    assert hf is not None and ms is not None
+    assert hf is not None
     assert hf._tasks_file == base / "hf_download_tasks.json"
-    assert ms._tasks_file == base / "ms_download_tasks.json"
 
     hf.restore_tasks = AsyncMock()
-    ms.restore_tasks = AsyncMock()
     with TestClient(server.app):
         pass
 
     hf.restore_tasks.assert_awaited_once()
-    ms.restore_tasks.assert_awaited_once()
