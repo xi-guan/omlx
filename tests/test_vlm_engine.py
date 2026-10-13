@@ -784,6 +784,7 @@ class TestInjectToolCalling:
 
         assert tokenizer.has_tool_calling is True
         assert tokenizer.tool_call_start == "<tool_call>"
+        assert tokenizer.tool_call_start_tokens == (100,)
 
     def test_skips_when_no_chat_template(self):
         """No chat template → no injection."""

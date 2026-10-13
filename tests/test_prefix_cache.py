@@ -2193,6 +2193,40 @@ class TestArraysCacheLastBlockOnly:
         assert tail.ref_count == 2
         assert cache.get_stats().tail_blocks_stored == 1
 
+    def test_store_cache_tail_dedup_reindexes_a_dropped_tail(self, mx):
+        """A tail pushed out of the per-parent index while its block stayed cached is indexed again on the next store."""
+        cache, paged_cache, _, config = self._tail_fixture(mx)
+        snapshots = {
+            4: self._hybrid_state(mx, 4, 4.0),
+            7: self._hybrid_state(mx, 7, 7.0),
+        }
+
+        def store(request_id):
+            table = cache.store_cache(
+                request_id,
+                list(range(7)),
+                self._hybrid_state(mx, 7, 7.0),
+                model_cache_config=config,
+                boundary_snapshots=snapshots,
+                _store_tail_terminal=True,
+            )
+            paged_cache.release_for_eviction(table.block_ids)
+            return table
+
+        first = store("req-a")
+        parent = paged_cache.allocated_blocks[first.block_ids[0]].block_hash
+        tail_hash = paged_cache.allocated_blocks[first.block_ids[-1]].block_hash
+        # short prompts of other conversations under the same parent
+        for i in range(8):
+            paged_cache.register_tail_block(parent, f"other-{i}".encode(), 2)
+        assert tail_hash not in paged_cache._tail_index[parent]
+
+        store("req-b")
+        table, remaining = cache.fetch_cache("req-c", list(range(7)) + [90])
+
+        assert table is not None and table.num_tokens == 7
+        assert remaining == [90]
+
     def test_attaching_ssd_manager_seeds_tail_index(self):
         """Tails from earlier runs are indexed when the SSD tier is attached later."""
         paged_cache = PagedCacheManager(

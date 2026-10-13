@@ -959,6 +959,7 @@ class BlockAwarePrefixCache(CacheManager):
         hot_cache_write_back: bool = True,
         _store_exact_terminal: bool = False,
         _store_tail_terminal: bool = False,
+        _shared_tail: bool = False,
     ) -> BlockTable | None:
         """
         Store computed cache for future reuse.
@@ -986,6 +987,8 @@ class BlockAwarePrefixCache(CacheManager):
                 ordinary prefix matching.
             _store_tail_terminal: Persist the trailing partial block as a tail
                 block; ``tokens`` must end on a snapshot in ``boundary_snapshots``.
+            _shared_tail: The tail is a prefix many conversations share, not
+                one conversation's tip, so later stores never supersede it.
 
         Returns:
             BlockTable for the stored cache, or None on failure
@@ -1374,6 +1377,10 @@ class BlockAwarePrefixCache(CacheManager):
                     block_table.num_tokens += len(block_tokens)
                     if is_tail_terminal:
                         tail_in_table = True
+                        # the per-parent index may have dropped it while the block stayed cached
+                        self.paged_cache.register_tail_block(
+                            parent_hash, existing_block.block_hash, len(block_tokens)
+                        )
                     continue
 
             # Allocate new block
@@ -1696,6 +1703,7 @@ class BlockAwarePrefixCache(CacheManager):
             and first_new_block_idx is not None
             and first_new_block_idx < len(block_table.block_ids)
             and (rotating_layout or tail_in_table)
+            and not _shared_tail
         ):
             new_tip_id = block_table.block_ids[-1]
             new_tip = self.paged_cache.allocated_blocks.get(new_tip_id)

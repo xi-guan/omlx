@@ -1481,6 +1481,54 @@ class TestChatCompletionEndpoint:
             assert recorded_count_tools == [None]
             assert "tools" not in recorded_chat_kwargs[0]
 
+    def test_chat_completion_tool_choice_none_keeps_tools_it_can_block(
+        self, client, mock_llm_engine
+    ):
+        """tool_choice='none' keeps the tools in the prompt and blocks the call marker."""
+        recorded_count_tools = []
+        recorded_chat_kwargs = []
+
+        def count_chat_tokens(messages, tools=None, **kwargs):
+            recorded_count_tools.append(tools)
+            return 1
+
+        async def chat(messages, **kwargs):
+            recorded_chat_kwargs.append(kwargs)
+            return MockGenerationOutput(
+                text="Plain response.",
+                prompt_tokens=1,
+                completion_tokens=1,
+                finish_reason="stop",
+            )
+
+        mock_llm_engine.count_chat_tokens = count_chat_tokens
+        mock_llm_engine.chat = chat
+        # one token, so blocking it blocks nothing else
+        mock_llm_engine.tokenizer.tool_call_start_tokens = (99,)
+
+        response = client.post(
+            "/v1/chat/completions",
+            json={
+                "model": "test-model",
+                "messages": [{"role": "user", "content": "Hello"}],
+                "tool_choice": "none",
+                "tools": [
+                    {
+                        "type": "function",
+                        "function": {
+                            "name": "user_search",
+                            "parameters": {"type": "object", "properties": {}},
+                        },
+                    }
+                ],
+            },
+        )
+
+        assert response.status_code == 200
+        assert recorded_count_tools[0] is not None
+        assert "tools" in recorded_chat_kwargs[0]
+        assert recorded_chat_kwargs[0]["suppress_token_ids"] == [99]
+
 
 @pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize(

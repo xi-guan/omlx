@@ -631,6 +631,8 @@ class _PrefillState:
     # Tail snapshot plan, see _prefill_tail_plan.
     tail_at: int | None = None
     end_tail: bool = False
+    # Shared-prefix tail stop, see _plan_shared_prefix_tail.
+    shared_at: int | None = None
 
 
 @dataclass
@@ -4348,6 +4350,9 @@ class Scheduler:
         tail_at, end_tail = self._prefill_tail_plan(
             request, base_size, n_tokens, boundary_enabled
         )
+        shared_at = Scheduler._shared_prefix_stop(
+            request, base_size, n_tokens, boundary_enabled
+        )
 
         # The full prompt length is known here; hand it to the QSA indexer so
         # its arrays are sized once instead of doubling mid-prefill.
@@ -4396,6 +4401,8 @@ class Scheduler:
             # Stop once more at the tail position so its state is captured.
             if tail_at is not None and base_size + processed_tokens < tail_at:
                 n_to_process = min(n_to_process, tail_at - base_size - processed_tokens)
+            if shared_at is not None and base_size + processed_tokens < shared_at:
+                n_to_process = min(n_to_process, shared_at - base_size - processed_tokens)
 
             atomic_prefix = minimum_prefix if processed_tokens == 0 else 0
             if atomic_prefix:
@@ -4583,6 +4590,8 @@ class Scheduler:
                     self._emit_prefill_tail_snapshot(
                         request, prompt_cache, total_tokens
                     )
+                if total_tokens == shared_at:
+                    self._store_shared_prefix_tail(request, prompt_cache, total_tokens)
 
             Scheduler._check_post_prefill_memory(
                 self,
@@ -6544,6 +6553,9 @@ class Scheduler:
         state.tail_at, state.end_tail = self._prefill_tail_plan(
             request, base_size, len(tokens), boundary_enabled
         )
+        state.shared_at = Scheduler._shared_prefix_stop(
+            request, base_size, len(tokens), boundary_enabled
+        )
         return state
 
     def _announce_first_prefill_chunk(self, tokens, base_size, boundary_enabled, block_size, embeds_array) -> None:
@@ -6641,6 +6653,8 @@ class Scheduler:
         cache_tokens = state.base_size + state.tokens_processed
         if state.tail_at is not None and cache_tokens < state.tail_at:
             n = min(n, state.tail_at - cache_tokens)
+        if state.shared_at is not None and cache_tokens < state.shared_at:
+            n = min(n, state.shared_at - cache_tokens)
 
         # Adaptive throttle — see _adaptive_chunk_size docstring. Raises
         # if even prefill_min_chunk_tokens would exceed the cap; #1405
@@ -6935,6 +6949,8 @@ class Scheduler:
                 self._emit_prefill_tail_snapshot(
                     state.request, state.cache, total_tokens
                 )
+            if total_tokens == state.shared_at:
+                self._store_shared_prefix_tail(state.request, state.cache, total_tokens)
 
         # Progress callback so the admin UI prefilling list advances during
         # chunked prefill. _do_external_prefill calls _on_prompt_progress
@@ -7919,7 +7935,7 @@ class Scheduler:
             )
 
         suppress_processor = _make_suppress_logits_processor(
-            self._model_suppress_tokens
+            {*self._model_suppress_tokens, *(sampling_params.suppress_token_ids or ())}
         )
         if suppress_processor is not None:
             logits_processors.append(suppress_processor)
@@ -10188,6 +10204,93 @@ class Scheduler:
                 f"{best_p}: stored=...{stored_ctx!r} vs prompt=...{prompt_ctx!r}"
             )
 
+    def _plan_shared_prefix_tail(self, request: Request) -> None:
+        """mark where this prompt stops matching a recent one, so a prefix conversations share off the block grid gets a tail"""
+        lookup = getattr(self, "_last_prefix_cache_lookup", None)
+        block = self.config.paged_cache_block_size
+        if (
+            not lookup
+            or lookup.get("request_id") != request.request_id
+            or block <= 0
+            or self.block_aware_cache is None
+            or request.specprefill_indices is not None
+            or request.vlm_inputs_embeds is not None
+            or not self._detect_boundary_snapshot_need()
+        ):
+            return
+        prompt = request.prompt_token_ids or []
+        common = int(lookup.get("common_prefix_tokens") or 0)
+        if common <= request.cached_tokens:
+            return
+        shared = self._shared_prefix_line_end(prompt, common)
+        if (
+            shared % block == 0
+            or shared < block // 4
+            or shared <= request.cached_tokens
+            or shared >= len(prompt) - 1
+        ):
+            return
+        request.shared_prefix_tail_at = shared
+
+    def _shared_prefix_line_end(self, prompt: list[int], shared: int) -> int:
+        """cut after the last shared newline: ids where prompts diverge can share leading characters by chance"""
+        for i in range(shared - 1, max(shared - 256, 0) - 1, -1):
+            try:
+                text = self.tokenizer.decode([prompt[i]])
+            except Exception:
+                return shared
+            if "\n" in text:
+                return i + 1
+        return shared
+
+    @staticmethod
+    def _shared_prefix_stop(
+        request: Request, base_size: int, n_tokens: int, boundary_enabled: bool
+    ) -> int | None:
+        """the shared-prefix tail position when it lies inside this prefill"""
+        at = getattr(request, "shared_prefix_tail_at", 0)
+        if boundary_enabled and base_size < at < base_size + n_tokens - 1:
+            return at
+        return None
+
+    def _store_shared_prefix_tail(
+        self, request: Request, prompt_cache: list[Any], token_count: int
+    ) -> None:
+        """store the prompt up to token_count as a tail that other conversations restore"""
+        store_id = f"{request.request_id}:shared-prefix"
+        table = None
+        try:
+            with _mx_buffer_access_lock, mx.stream(self._stream):
+                extracted, model_cache_config = self._extract_cache_states(prompt_cache)
+                if not extracted:
+                    return
+                arrays = self._collect_arrays_from_extracted_cache(extracted)
+                if arrays:
+                    mx.eval(*arrays)
+                table = self.block_aware_cache.store_cache(
+                    store_id,
+                    list(request.prompt_token_ids[:token_count]),
+                    extracted,
+                    model_cache_config=model_cache_config,
+                    hot_cache_write_back=not self._bypass_hot_cache_under_pressure(),
+                    _store_tail_terminal=True,
+                    _shared_tail=True,
+                )
+        except Exception as e:
+            logger.warning("Shared prefix store failed for %s: %s", request.request_id, e)
+        if table is None and self.paged_cache_manager is not None:
+            table = self.paged_cache_manager.get_block_table(store_id)
+        if table and self.paged_cache_manager is not None:
+            self.paged_cache_manager.release_for_eviction(table.block_ids)
+            self.paged_cache_manager.request_tables.pop(store_id, None)
+        self.block_aware_cache.clear_request_entry(store_id)
+        if table is not None and table.num_tokens == token_count:
+            logger.info(
+                "Stored the first %d prompt tokens of %s as a shared prefix tail",
+                token_count,
+                request.request_id,
+            )
+
     # Wait only for reusable blocks. The store/overlap ratio is a heuristic
     # limiting waits on large stores that share a small prefix; the timeout
     # below still bounds slow storage independently of token counts.
@@ -10664,6 +10767,7 @@ class Scheduler:
             request.prefill_resumed_tokens = max(
                 0, request.cached_tokens - request.requeue_reported_cached_tokens
             )
+        self._plan_shared_prefix_tail(request)
         self._prefix_cache_prepared.add(request.request_id)
 
     def _record_prefix_cache_result(self, request: Request) -> None:
@@ -11027,7 +11131,13 @@ class Scheduler:
             )
             return None
 
-        mtp_sampler = _make_suppressing_sampler(sampler, self._model_suppress_tokens)
+        mtp_sampler = _make_suppressing_sampler(
+            sampler,
+            {
+                *self._model_suppress_tokens,
+                *(getattr(request.sampling_params, "suppress_token_ids", None) or ()),
+            },
+        )
         proc_sampler: MTPProcessingSampler | None = None
         if mtp_processors:
             proc_sampler = MTPProcessingSampler(

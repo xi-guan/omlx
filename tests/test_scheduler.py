@@ -2765,11 +2765,29 @@ class TestSchedulerSuppressTokens:
         assert float(masked[0, 2].item()) == float("-inf")
         assert float(masked[0, 1].item()) == 4.0
 
-    def test_vlm_mtp_first_bonus_uses_suppressing_sampler(
+    def test_suppress_logits_processor_adds_request_ids(
         self, mock_model, mock_tokenizer
     ):
         scheduler = Scheduler(model=mock_model, tokenizer=mock_tokenizer)
-        scheduler._model_suppress_tokens = {3}
+        scheduler._model_suppress_tokens = {2}
+
+        _, processors = scheduler._build_sampler_and_processors(
+            SamplingParams(suppress_token_ids=[3])
+        )
+
+        masked = processors[-1](mx.array([1]), mx.array([[0.0, 4.0, 100.0, 50.0]]))
+        mx.eval(masked)
+
+        assert float(masked[0, 2].item()) == float("-inf")
+        assert float(masked[0, 3].item()) == float("-inf")
+        assert float(masked[0, 1].item()) == 4.0
+
+    @pytest.mark.parametrize(("model_ids", "request_ids"), [({3}, None), (set(), [3])])
+    def test_vlm_mtp_first_bonus_uses_suppressing_sampler(
+        self, mock_model, mock_tokenizer, model_ids, request_ids
+    ):
+        scheduler = Scheduler(model=mock_model, tokenizer=mock_tokenizer)
+        scheduler._model_suppress_tokens = model_ids
         scheduler._vlm_mtp_drafter = MagicMock()
 
         class FakeLanguageModel:
@@ -2801,7 +2819,7 @@ class TestSchedulerSuppressTokens:
         request = Request(
             request_id="req-mtp",
             prompt=[1],
-            sampling_params=SamplingParams(max_tokens=4),
+            sampling_params=SamplingParams(max_tokens=4, suppress_token_ids=request_ids),
         )
         request.prompt_token_ids = [1]
         request.rope_deltas = 123.0
