@@ -40,7 +40,7 @@ _USE_RE = re.compile(r"this\.([A-Za-z_$][\w$]*)")
 
 def _component_body() -> str:
     root = Path(__file__).resolve().parents[1]
-    lines = (root / "omlx/admin/static/js/dashboard.js").read_text().splitlines()
+    lines = (root / "apps/omlx-web/omlx_web/static/js/dashboard.js").read_text().splitlines()
     start = next(i for i, ln in enumerate(lines) if ln.strip() == "return {")
     end = next(i for i, ln in enumerate(lines) if ln == "    }")
     return "\n".join(lines[start:end])
