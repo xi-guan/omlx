@@ -164,6 +164,19 @@
             pointer-events: none;
             box-shadow: 0 4px 12px rgb(var(--palette-black) / 0.15);
         }
+
+        /* disable all animations and transitions globally */
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+
+        /* flatten large border-radius to 0.5rem */
+        .rounded-lg { border-radius: 0.5rem !important; }
+        .rounded-xl { border-radius: 0.5rem !important; }
+        .rounded-2xl { border-radius: 0.5rem !important; }
+        .rounded-3xl { border-radius: 0.5rem !important; }
     </style>
 
     {% block head %}{% endblock %}
