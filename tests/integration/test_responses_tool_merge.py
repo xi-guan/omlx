@@ -362,3 +362,26 @@ class TestToolChoiceNoneSuppressesTemplateExposure:
         assert tools is None, (
             f"MCP tools leaked to the template despite tool_choice='none': {tools!r}"
         )
+
+    def test_tools_kept_when_the_call_marker_can_be_blocked(
+        self, client_with_mcp, engine
+    ):
+        """A one-token call marker is blocked instead, so the tools stay as in vLLM."""
+        engine.tokenizer.tool_call_start_tokens = (99,)
+        resp = client_with_mcp.post(
+            "/v1/responses",
+            json={
+                "model": "test-model",
+                "input": "What's the weather?",
+                "tool_choice": "none",
+                "tools": [{
+                    "type": "function",
+                    "name": "get_stock_price",
+                    "parameters": {"type": "object", "properties": {}},
+                }],
+            },
+        )
+        assert resp.status_code == 200
+        kwargs = engine.recorded_chat_kwargs[-1]
+        assert "get_stock_price" in [t["function"]["name"] for t in kwargs["tools"]]
+        assert kwargs["suppress_token_ids"] == [99]

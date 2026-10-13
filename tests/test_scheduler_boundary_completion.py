@@ -747,3 +747,95 @@ def test_client_cancel_keeps_external_prefill_progress(
         )
     finally:
         scheduler.shutdown()
+
+
+@pytest.mark.parametrize("system_len", [6, 3])
+@pytest.mark.parametrize("chunked", [False, True])
+def test_shared_prefix_tail_serves_other_conversations(
+    mock_tokenizer, tmp_path, chunked, system_len
+):
+    """A prefix that conversations share but that ends off the block grid (a
+    system prompt) is stored as a tail by the second one, so later ones reuse it."""
+    mx.random.seed(7)
+    model = _tiny_hybrid_model()
+    scheduler = Scheduler(
+        model=model,
+        tokenizer=mock_tokenizer,
+        config=SchedulerConfig(
+            paged_cache_block_size=4, prefill_step_size=4, chunked_prefill=chunked
+        ),
+    )
+    paged = PagedCacheManager(
+        block_size=4, max_blocks=64, initial_blocks=64, model_name="tiny"
+    )
+    ssd = PagedSSDCacheManager(
+        cache_dir=tmp_path / "cache",
+        max_size_bytes=16 * 1024**2,
+        expected_model_name="tiny",
+        expected_num_layers=2,
+        expected_block_size=4,
+        expected_layer_cache_types=["ArraysCache", "KVCache"],
+    )
+    prefix = BlockAwarePrefixCache(
+        model=model, paged_cache_manager=paged, paged_ssd_cache_manager=ssd
+    )
+    scheduler.paged_cache_manager = paged
+    scheduler.paged_ssd_cache_manager = ssd
+    scheduler._boundary_snapshot_store = BoundarySnapshotSSDStore(tmp_path / "cache")
+    scheduler.block_aware_cache = prefix
+
+    try:
+        # 6: one block and two tokens; 3: under one block, so the tail hangs off the root
+        system = list(range(3, 3 + system_len))
+        marker = system_len + 3
+        _run_through_scheduler(scheduler, system + [20, 21, 22, 23], marker, "conv-1")
+        second = _run_through_scheduler(
+            scheduler, system + [24, 25, 26, 27], marker, "conv-2"
+        )
+        assert second.cached_tokens == system_len // 4 * 4
+        third = _run_through_scheduler(
+            scheduler, system + [28, 29, 30, 31], marker, "conv-3"
+        )
+        assert third.cached_tokens == len(system)
+        # the next turn supersedes that conversation's tips but must not drop the shared tail
+        _run_through_scheduler(
+            scheduler, system + [28, 29, 30, 31, 1, 2, 5, 6], marker + 4, "conv-3-turn-2"
+        )
+        fourth = _run_through_scheduler(
+            scheduler, system + [32, 33, 34, 35], marker, "conv-4"
+        )
+        assert fourth.cached_tokens == len(system)
+        _assert_restored_matches_cold(
+            model, scheduler, prefix, system + [16, 17, 18], len(system)
+        )
+    finally:
+        scheduler.shutdown()
+
+
+def test_shared_prefix_tail_stops_after_the_last_shared_line(
+    mock_model, mock_tokenizer
+):
+    """Prompts that diverge at a session id can share its first characters by chance."""
+    scheduler = Scheduler(
+        model=mock_model,
+        tokenizer=mock_tokenizer,
+        config=SchedulerConfig(paged_cache_block_size=4),
+    )
+    scheduler._boundary_snapshot_required = True
+    scheduler.block_aware_cache = MagicMock()
+    scheduler.tokenizer.decode = lambda ids: "\n" if ids == [10] else "x"
+    prompt = [3, 4, 5, 6, 10, 7, 8, 9, 11, 12, 13]
+    request = Request(
+        request_id="next", prompt=prompt, sampling_params=SamplingParams(max_tokens=1)
+    )
+    request.prompt_token_ids = prompt
+    request.num_prompt_tokens = len(prompt)
+    scheduler._last_prefix_cache_lookup = {
+        "request_id": "next",
+        "common_prefix_tokens": 7,
+    }
+
+    scheduler._plan_shared_prefix_tail(request)
+
+    assert request.shared_prefix_tail_at == 5
+    scheduler.shutdown()

@@ -3100,6 +3100,10 @@ class VLMBatchedEngine(BaseEngine):
         tokenizer.tool_call_start = tool_call_start
         tokenizer.tool_call_end = tool_call_end
         tokenizer.tool_parser = tool_module.parse_tool_call
+        # as on mlx-lm's wrapper; tool_choice="none" blocks this id
+        tokenizer.tool_call_start_tokens = (
+            (vocab[tool_call_start],) if tool_call_start else None
+        )
 
         logger.info(f"VLM tool calling enabled: parser={tool_parser_type}")
 
@@ -4885,6 +4889,7 @@ class VLMBatchedEngine(BaseEngine):
             seed=kwargs.get("seed", None),
             stop_skips_reasoning=kwargs.get("stop_skips_reasoning", False),
             logits_observer=kwargs.get("logits_observer"),
+            suppress_token_ids=kwargs.get("suppress_token_ids"),
         )
 
         # SpecPrefill: forward per-request overrides to the engine, mirroring
@@ -5005,6 +5010,7 @@ class VLMBatchedEngine(BaseEngine):
             seed=kwargs.get("seed", None),
             stop_skips_reasoning=kwargs.get("stop_skips_reasoning", False),
             logits_observer=kwargs.get("logits_observer"),
+            suppress_token_ids=kwargs.get("suppress_token_ids"),
         )
 
         # SpecPrefill: pass per-request overrides

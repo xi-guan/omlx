@@ -4765,6 +4765,21 @@ def _engine_accepts_images(engine: BaseEngine) -> bool:
     )
 
 
+def _tool_call_block_ids(
+    tool_choice: str | dict | None, tools: list | None, engine: BaseEngine
+) -> list[int] | None:
+    """Token ids that keep a tool_choice="none" request from calling the tools it sees.
+
+    The tools then stay in the prompt (as in vLLM), so the prompt keeps the
+    prefix of the turns that could call them and their cache still applies.
+    """
+    if tool_choice != "none" or not tools:
+        return None
+    ids = getattr(getattr(engine, "tokenizer", None), "tool_call_start_tokens", None)
+    # blocking the first piece of a multi-token marker would block ordinary text too
+    return list(ids) if ids and len(ids) == 1 else None
+
+
 def _resolve_template_tools(
     request: ChatCompletionRequest,
     engine: BaseEngine,
@@ -4773,7 +4788,9 @@ def _resolve_template_tools(
     """Return the request tools, plus exposed MCP tools, in template form."""
     # Merge MCP tools with user-provided tools unless the request explicitly
     # disables tool use.
-    tools_disabled = request.tool_choice == "none"
+    tools_disabled = request.tool_choice == "none" and not _tool_call_block_ids(
+        request.tool_choice, request.tools, engine
+    )
     if getattr(engine, "is_diffusion_model", False) and not getattr(
         engine, "supports_tool_calling", False
     ):
@@ -5065,6 +5082,9 @@ async def create_chat_completion(
         # Add tools if provided (includes MCP tools)
         if tools_for_template:
             chat_kwargs["tools"] = tools_for_template
+            block_ids = _tool_call_block_ids(request.tool_choice, request.tools, engine)
+            if block_ids:
+                chat_kwargs["suppress_token_ids"] = block_ids
 
         # Add chat template kwargs
         if merged_ct_kwargs:
@@ -8360,10 +8380,11 @@ async def create_response(
 
         # Merge MCP tools, matching create_chat_completion's tools_disabled
         # semantics: tool_choice="none" suppresses tool exposure to the chat
-        # template, and the MCP merge itself must run even when the client
-        # sent no tools of its own, since MCP servers can offer tools the
-        # client never listed.
-        tools_disabled = request.tool_choice == "none" or (
+        # template unless the call marker can be blocked, and the MCP merge
+        # itself must run even when the client sent no tools of its own,
+        # since MCP servers can offer tools the client never listed.
+        block_ids = _tool_call_block_ids(request.tool_choice, openai_tools, engine)
+        tools_disabled = (request.tool_choice == "none" and not block_ids) or (
             getattr(engine, "is_diffusion_model", False)
             and not getattr(engine, "supports_tool_calling", False)
         )
@@ -8486,6 +8507,8 @@ async def create_response(
 
         if tools_for_template:
             chat_kwargs["tools"] = tools_for_template
+            if block_ids:
+                chat_kwargs["suppress_token_ids"] = block_ids
         if merged_ct_kwargs:
             chat_kwargs["chat_template_kwargs"] = merged_ct_kwargs
 
