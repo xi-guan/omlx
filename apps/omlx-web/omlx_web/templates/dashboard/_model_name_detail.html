@@ -1,0 +1,21 @@
+<!-- What a model name means; needs `info` (ActiveModels.describe) and `amSource` (full folder name) in scope -->
+<div>
+    <div class="text-sm font-semibold text-neutral-800" x-text="info.shortName"></div>
+    <div x-show="info.vendor" class="text-xs text-neutral-500"
+         x-text="info.vendor ? info.vendor.name + (info.vendor.about ? ' · ' + ActiveModels.vendorAbout(info.vendor, window.t) : '') : ''"></div>
+</div>
+<div class="text-xs">
+    <div class="text-neutral-500">{{ t('status.active_models.detail.full_name') }}</div>
+    <div class="font-mono text-neutral-700 break-all" x-text="amSource"></div>
+</div>
+<div x-show="info.parts.some(p => p.key)">
+    <div class="text-xs font-semibold text-neutral-600">{{ t('status.active_models.detail.name_parts') }}</div>
+    <dl class="mt-1 space-y-1">
+        <template x-for="(part, i) in info.parts.filter(p => p.key)" :key="i + part.token">
+            <div class="flex items-baseline gap-3 text-xs">
+                <dt class="w-24 shrink-0 font-mono font-medium text-neutral-700 break-all" x-text="part.token"></dt>
+                <dd class="min-w-0 text-neutral-600 leading-snug" x-text="ActiveModels.explain(part, window.t)"></dd>
+            </div>
+        </template>
+    </dl>
+</div>
