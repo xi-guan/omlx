@@ -1,0 +1,12 @@
+<!-- Vendor logo, or the first letter when there is none; needs `info` from ActiveModels.describe() in scope -->
+<span class="w-5 h-5 shrink-0 inline-flex items-center" aria-hidden="true">
+    <template x-if="info.vendor?.logo && !info.vendor.mono">
+        <img class="w-4 h-4 object-contain" :src="info.vendor.logo" alt="">
+    </template>
+    <template x-if="info.vendor?.logo && info.vendor.mono">
+        <span class="w-4 h-4 text-neutral-700" :style="info.vendor.maskStyle"></span>
+    </template>
+    <template x-if="!info.vendor?.logo">
+        <span class="w-5 h-5 rounded-full bg-neutral-200 text-neutral-600 text-caption font-semibold inline-flex items-center justify-center" x-text="info.initial"></span>
+    </template>
+</span>
