@@ -854,3 +854,30 @@
     .tp-btn--focus { box-shadow: 0 0 0 1.5px var(--bg-primary), 0 0 0 3px var(--focus-ring-color); }
     .tp-switch { position: relative; width: 22px; height: 12px; margin-right: auto; border-radius: 9999px; background: var(--switch-on); }
     .tp-switch__knob { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 9999px; background: rgb(var(--palette-white)); }
+
+    /* === Active Models: one line per model, details in a popover === */
+    /* the model section only exists inside the wide-screen popover */
+    .am-detail-model { display: none; }
+    /* keyboard focus must not land on an invisible unload button */
+    .am-row:focus-within .am-unload { opacity: 1; }
+    /* 1024px is Tailwind's lg, where the one-line row replaces the stacked layout */
+    @media (min-width: 1024px) {
+        .am-detail {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 1.5rem;
+            z-index: 30;
+            width: min(34rem, calc(100vw - 2rem));
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-normal);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgb(var(--palette-black) / 0.18);
+        }
+        .am-detail.am-detail-up { top: auto; bottom: 100%; }
+        .am-detail.am-detail-open { display: block; }
+        .am-detail-model { display: block; }
+        .am-detail .ml-5 { margin-left: 0; }
+    }
