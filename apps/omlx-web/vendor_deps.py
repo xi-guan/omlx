@@ -86,6 +86,19 @@ CSS_DEPS = {
     "css/gridstack.min.css": "https://cdn.jsdelivr.net/npm/gridstack@13.3.0/dist/gridstack.min.css",
 }
 
+# =========================================================================
+# Image dependencies
+# =========================================================================
+LOBE_ICONS = "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons"
+IMG_DEPS = {
+    # Lobe Icons 1.95.1 (MIT, Copyright (c) 2023 LobeHub) - vendor logos on Active Models
+    "img/vendors/qwen-color.svg": f"{LOBE_ICONS}/qwen-color.svg",
+    "img/vendors/baai.svg": f"{LOBE_ICONS}/baai.svg",
+    "img/vendors/jina.svg": f"{LOBE_ICONS}/jina.svg",
+    "img/vendors/openai.svg": f"{LOBE_ICONS}/openai.svg",
+    "img/vendors/cloudflare-color.svg": f"{LOBE_ICONS}/cloudflare-color.svg",
+}
+
 
 def download_js_css() -> None:
     """Download JavaScript and CSS dependencies."""
@@ -95,6 +108,10 @@ def download_js_css() -> None:
 
     print("\n=== CSS Dependencies ===")
     for dest_rel, url in CSS_DEPS.items():
+        _download(url, STATIC / dest_rel)
+
+    print("\n=== Image Dependencies ===")
+    for dest_rel, url in IMG_DEPS.items():
         _download(url, STATIC / dest_rel)
 
 

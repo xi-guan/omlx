@@ -6779,6 +6779,7 @@ def _build_active_models_data() -> dict:
     """Build active models status for the dashboard Active Models card."""
     from ..model_discovery import format_size
     from ..prefill_progress import get_prefill_tracker
+    from ..server_metrics import get_server_metrics
 
     engine_pool = _get_engine_pool()
     server_state = _get_server_state()
@@ -6803,6 +6804,7 @@ def _build_active_models_data() -> dict:
 
     now = time.monotonic()
     tracker = get_prefill_tracker()
+    metrics = get_server_metrics()
     status = engine_pool.get_status()
     enforcer = (
         getattr(server_state, "process_memory_enforcer", None)
@@ -7077,6 +7079,9 @@ def _build_active_models_data() -> dict:
                 "generating": generating,
                 "idle_seconds": idle_seconds,
                 "ttl_remaining_seconds": ttl_remaining_seconds,
+                "avg_generation_tps": metrics.get_snapshot(model_id=model_id)[
+                    "avg_generation_tps"
+                ],
                 "cluster": (
                     {**model_info["cluster"], "live": cluster_live}
                     if model_info.get("cluster")

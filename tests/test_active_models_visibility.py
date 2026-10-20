@@ -620,3 +620,24 @@ def test_active_models_resolves_scheduler_property_without_async_core():
     assert model["active_requests"] == 1
     assert model["generating"][0]["request_id"] == "gen-1"
     assert model["activities"] == []
+
+
+def test_active_models_include_session_avg_generation_speed():
+    """Idle rows show the model's session decode speed from server metrics."""
+
+    class FakeMetrics:
+        def get_snapshot(self, model_id="", scope="session"):
+            assert (model_id, scope) == ("model-a", "session")
+            return {"avg_generation_tps": 164.2}
+
+    with (
+        patch("omlx.admin.routes._get_server_state", return_value=None),
+        patch.object(admin_routes, "_get_engine_pool", return_value=FakeIdlePool()),
+        patch.object(admin_routes, "_get_settings_manager", return_value=None),
+        patch.object(admin_routes, "_get_global_settings", return_value=None),
+        patch("omlx.prefill_progress.get_prefill_tracker", return_value=EmptyPrefillTracker()),
+        patch("omlx.server_metrics.get_server_metrics", return_value=FakeMetrics()),
+    ):
+        data = admin_routes._build_active_models_data()
+
+    assert data["models"][0]["avg_generation_tps"] == 164.2
