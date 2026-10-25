@@ -92,6 +92,10 @@ lint:
     uv run mypy omlx/
     log_done "all checks passed"
 
+# sync settings from ~/.config/omlx/omlx-config.toml: just config <export|plan|apply> [args]
+config verb *args:
+    @"$HOME/.config/omlx/omlxctl" {{verb}} {{args}}
+
 # run as a persistent launchd service: just service <install|uninstall|status|logs|restart>
 service verb:
     @just _service-{{verb}}
