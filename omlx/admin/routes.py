@@ -7987,7 +7987,9 @@ async def list_hf_models(is_admin: bool = Depends(require_admin)):
     # Resolve overrides via the same settings_manager the modal reads — so a
     # user-set ``model_type_override`` (e.g., Kokoro → audio_tts) drives the
     # tab filter, instead of the static config-based detection alone.
-    settings_manager = _get_settings_manager()
+    settings_manager = (
+        _get_settings_manager() if _get_settings_manager is not None else None
+    )
 
     def _add_model(
         model_path: Path,
