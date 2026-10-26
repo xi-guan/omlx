@@ -100,6 +100,10 @@ config verb *args:
 service verb:
     @just _service-{{verb}}
 
+# shortcut for `just service restart`
+restart:
+    @just _service-restart
+
 # install LaunchAgent (start at login, restart on crash, binds 0.0.0.0, port from settings.json)
 [private]
 _service-install:
