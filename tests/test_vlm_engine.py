@@ -813,6 +813,7 @@ class TestInjectToolCalling:
 
         assert tokenizer.has_tool_calling is True
         assert tokenizer.tool_call_start == "<tool_call>"
+        assert tokenizer.tool_call_start_tokens == (100,)
 
     def test_mimo_template_uses_qwen3_coder(self):
         """MiMo writes <tool_call><function= with no newline (#4933)."""

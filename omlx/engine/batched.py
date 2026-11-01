@@ -1211,6 +1211,7 @@ class BatchedEngine(BaseEngine):
             logits_observer=kwargs.get("logits_observer"),
             logprobs=bool(kwargs.get("logprobs", False)),
             top_logprobs=kwargs.get("top_logprobs"),
+            suppress_token_ids=kwargs.get("suppress_token_ids"),
         )
 
         # SpecPrefill: forward per-request overrides to the engine, mirroring
@@ -1301,6 +1302,7 @@ class BatchedEngine(BaseEngine):
             logits_observer=kwargs.get("logits_observer"),
             logprobs=bool(kwargs.get("logprobs", False)),
             top_logprobs=kwargs.get("top_logprobs"),
+            suppress_token_ids=kwargs.get("suppress_token_ids"),
         )
 
         # SpecPrefill: pass per-request overrides to engine
