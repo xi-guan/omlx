@@ -8594,7 +8594,7 @@ class Scheduler:
             )
 
         suppress_processor = _make_suppress_logits_processor(
-            self._model_suppress_tokens
+            {*self._model_suppress_tokens, *(sampling_params.suppress_token_ids or ())}
         )
         if suppress_processor is not None:
             logits_processors.append(suppress_processor)
@@ -11719,7 +11719,13 @@ class Scheduler:
             )
             return None
 
-        mtp_sampler = _make_suppressing_sampler(sampler, self._model_suppress_tokens)
+        mtp_sampler = _make_suppressing_sampler(
+            sampler,
+            {
+                *self._model_suppress_tokens,
+                *(getattr(request.sampling_params, "suppress_token_ids", None) or ()),
+            },
+        )
         proc_sampler: MTPProcessingSampler | None = None
         if mtp_processors:
             proc_sampler = MTPProcessingSampler(

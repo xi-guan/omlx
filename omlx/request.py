@@ -99,6 +99,9 @@ class SamplingParams:
 
     # Read-only logits processor, applied after every other processor.
     logits_observer: Any = None
+    # Token ids this request may never sample, on top of the model's own
+    # suppress list (tool_choice="none" blocks the tool-call marker this way).
+    suppress_token_ids: Optional[List[int]] = None
 
     def __post_init__(self):
         if self.stop is None:
